@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "products": "Products",
+    "features": "Features",
+    "roadmap": "Roadmap",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "badge": "Smart Financial Tools",
+    "title1": "Take Control of",
+    "title2": "Your Finances",
+    "description": "Beautiful, ready-to-use financial templates and tools designed to help you track, plan, and grow your money — from personal budgets to business planning.",
+    "browseTemplates": "Browse Templates",
+    "learnMore": "Learn More",
+    "users": "500+ users",
+    "trusted": "Trusted tools",
+    "spreadsheetName": "Personal Finance Tracker.gsheet",
+    "monthlyIncome": "Monthly Income",
+    "expenses": "Expenses",
+    "savings": "Savings",
+    "investments": "Investments",
+    "netWorth": "Net Worth"
+  },
+  "products": {
+    "label": "Products",
+    "title": "Google Sheet Templates",
+    "description": "Professionally designed spreadsheets that make managing your money simple and visual.",
+    "getTemplate": "Get Template",
+    "items": [
+      {
+        "title": "Personal Finance Tracker",
+        "description": "Complete monthly income & expense tracker with automated summaries, charts, and savings goals.",
+        "badge": "Best Seller",
+        "features": ["Income & expense tracking", "Monthly/yearly summaries", "Savings goal tracker", "Visual charts"]
+      },
+      {
+        "title": "Budget Planner Pro",
+        "description": "Advanced budgeting template with category breakdowns, debt payoff calculator, and investment tracker.",
+        "badge": "Popular",
+        "features": ["50/30/20 rule built-in", "Debt snowball calculator", "Investment portfolio view", "Emergency fund tracker"]
+      },
+      {
+        "title": "Complete Finance Bundle",
+        "description": "All templates in one package — personal tracker, budget planner, net worth calculator, and more.",
+        "badge": "Best Value",
+        "features": ["All templates included", "Lifetime updates", "Video tutorials", "Priority support"]
+      }
+    ]
+  },
+  "features": {
+    "label": "Why Choose Us",
+    "title": "Built for Real Life",
+    "description": "Simple tools that actually get used — designed with care and tested by real people.",
+    "items": [
+      { "title": "Visual Dashboards", "desc": "Beautiful charts and graphs that update automatically as you enter your data." },
+      { "title": "Private & Secure", "desc": "Your data stays in your own Google Drive — no third-party access." },
+      { "title": "Works Everywhere", "desc": "Use on desktop, tablet, or phone with Google Sheets' native apps." },
+      { "title": "Auto Calculations", "desc": "Built-in formulas handle all the math — just enter your numbers." },
+      { "title": "Clean Design", "desc": "Professionally designed layouts that are easy to read and pleasant to use." },
+      { "title": "Support Included", "desc": "Get help setting up your templates with our guides and direct support." }
+    ]
+  },
+  "roadmap": {
+    "label": "Roadmap",
+    "title": "What's Coming Next",
+    "description": "We're building a complete ecosystem of financial tools — from personal to business.",
+    "items": [
+      { "status": "Live", "title": "Personal Finance Google Sheet Templates", "desc": "Track income, expenses, savings, and investments with beautiful spreadsheets." },
+      { "status": "Coming Soon", "title": "Personal Finance Web App", "desc": "A full web application for managing your personal finances with automation and insights." },
+      { "status": "Planned", "title": "SME Business Planner & ERP", "desc": "Financial planning, invoicing, inventory, and reporting tools built for small and medium businesses." }
+    ]
+  },
+  "cta": {
+    "title": "Ready to Master Your Money?",
+    "description": "Join our newsletter for early access to new products, financial tips, and exclusive discounts.",
+    "placeholder": "Enter your email",
+    "subscribe": "Subscribe"
+  },
+  "footer": {
+    "rights": "© {{year}} FinnFlow. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  }
+}

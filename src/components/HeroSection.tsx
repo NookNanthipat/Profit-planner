@@ -1,10 +1,19 @@
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Shield, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const HeroSection = () => {
+  const { t } = useTranslation();
+
+  const rows = [
+    { label: t("hero.monthlyIncome"), value: "฿45,000", color: "text-green-600" },
+    { label: t("hero.expenses"), value: "฿28,500", color: "text-destructive" },
+    { label: t("hero.savings"), value: "฿16,500", color: "text-accent" },
+    { label: t("hero.investments"), value: "฿8,200", color: "text-blue-500" },
+  ];
+
   return (
     <section className="relative min-h-screen flex items-center section-padding pt-32 overflow-hidden">
-      {/* Decorative elements */}
       <div className="absolute top-20 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
       <div className="absolute bottom-20 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
 
@@ -17,35 +26,35 @@ const HeroSection = () => {
           >
             <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground mb-6">
               <Zap size={14} className="text-accent" />
-              Smart Financial Tools
+              {t("hero.badge")}
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl leading-tight text-foreground mb-6">
-              Take Control of{" "}
-              <span className="text-gradient-gold">Your Finances</span>
+              {t("hero.title1")}{" "}
+              <span className="text-gradient-gold">{t("hero.title2")}</span>
             </h1>
 
             <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg font-light">
-              Beautiful, ready-to-use financial templates and tools designed to help you track, plan, and grow your money — from personal budgets to business planning.
+              {t("hero.description")}
             </p>
 
             <div className="flex flex-wrap gap-4 mb-12">
               <a href="#products" className="btn-gold inline-flex items-center gap-2">
-                Browse Templates <ArrowRight size={18} />
+                {t("hero.browseTemplates")} <ArrowRight size={18} />
               </a>
               <a href="#features" className="btn-outline-primary">
-                Learn More
+                {t("hero.learnMore")}
               </a>
             </div>
 
             <div className="flex items-center gap-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} className="text-accent" />
-                <span>500+ users</span>
+                <span>{t("hero.users")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield size={16} className="text-accent" />
-                <span>Trusted tools</span>
+                <span>{t("hero.trusted")}</span>
               </div>
             </div>
           </motion.div>
@@ -57,21 +66,15 @@ const HeroSection = () => {
             className="relative hidden lg:block"
           >
             <div className="relative animate-float">
-              {/* Mock spreadsheet card */}
               <div className="bg-card rounded-2xl shadow-2xl border border-border p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-3 h-3 rounded-full bg-destructive/60" />
                   <div className="w-3 h-3 rounded-full bg-accent/60" />
                   <div className="w-3 h-3 rounded-full bg-green-400/60" />
-                  <span className="ml-2 text-xs text-muted-foreground font-medium">Personal Finance Tracker.gsheet</span>
+                  <span className="ml-2 text-xs text-muted-foreground font-medium">{t("hero.spreadsheetName")}</span>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { label: "Monthly Income", value: "฿45,000", color: "text-green-600" },
-                    { label: "Expenses", value: "฿28,500", color: "text-destructive" },
-                    { label: "Savings", value: "฿16,500", color: "text-accent" },
-                    { label: "Investments", value: "฿8,200", color: "text-blue-500" },
-                  ].map((row) => (
+                  {rows.map((row) => (
                     <div key={row.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
                       <span className="text-sm text-muted-foreground">{row.label}</span>
                       <span className={`text-sm font-semibold ${row.color}`}>{row.value}</span>
@@ -80,18 +83,12 @@ const HeroSection = () => {
                 </div>
                 <div className="mt-4 h-20 bg-secondary rounded-lg flex items-end gap-1 p-3">
                   {[40, 65, 45, 80, 55, 70, 90, 60, 75, 85, 50, 95].map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 gold-gradient rounded-sm opacity-80"
-                      style={{ height: `${h}%` }}
-                    />
+                    <div key={i} className="flex-1 gold-gradient rounded-sm opacity-80" style={{ height: `${h}%` }} />
                   ))}
                 </div>
               </div>
-
-              {/* Floating badge */}
               <div className="absolute -bottom-4 -left-4 bg-primary text-primary-foreground rounded-xl px-4 py-3 shadow-lg">
-                <p className="text-xs font-medium opacity-70">Net Worth</p>
+                <p className="text-xs font-medium opacity-70">{t("hero.netWorth")}</p>
                 <p className="text-lg font-bold">+23.5%</p>
               </div>
             </div>

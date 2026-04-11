@@ -1,31 +1,15 @@
 import { motion } from "framer-motion";
 import { FileSpreadsheet, ArrowUpRight, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const products = [
-  {
-    title: "Personal Finance Tracker",
-    description: "Complete monthly income & expense tracker with automated summaries, charts, and savings goals.",
-    price: "฿299",
-    badge: "Best Seller",
-    features: ["Income & expense tracking", "Monthly/yearly summaries", "Savings goal tracker", "Visual charts"],
-  },
-  {
-    title: "Budget Planner Pro",
-    description: "Advanced budgeting template with category breakdowns, debt payoff calculator, and investment tracker.",
-    price: "฿499",
-    badge: "Popular",
-    features: ["50/30/20 rule built-in", "Debt snowball calculator", "Investment portfolio view", "Emergency fund tracker"],
-  },
-  {
-    title: "Complete Finance Bundle",
-    description: "All templates in one package — personal tracker, budget planner, net worth calculator, and more.",
-    price: "฿799",
-    badge: "Best Value",
-    features: ["All templates included", "Lifetime updates", "Video tutorials", "Priority support"],
-  },
-];
+const prices = ["฿299", "฿499", "฿799"];
 
 const ProductsSection = () => {
+  const { t } = useTranslation();
+  const items = t("products.items", { returnObjects: true }) as Array<{
+    title: string; description: string; badge: string; features: string[];
+  }>;
+
   return (
     <section id="products" className="section-padding bg-secondary/50">
       <div className="max-w-6xl mx-auto">
@@ -35,19 +19,15 @@ const ProductsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-semibold text-accent uppercase tracking-widest mb-3">Products</p>
-          <h2 className="text-3xl md:text-4xl text-foreground mb-4">
-            Google Sheet Templates
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Professionally designed spreadsheets that make managing your money simple and visual.
-          </p>
+          <p className="text-sm font-semibold text-accent uppercase tracking-widest mb-3">{t("products.label")}</p>
+          <h2 className="text-3xl md:text-4xl text-foreground mb-4">{t("products.title")}</h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">{t("products.description")}</p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {products.map((product, i) => (
+          {items.map((product, i) => (
             <motion.div
-              key={product.title}
+              key={i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -62,23 +42,20 @@ const ProductsSection = () => {
                   {product.badge}
                 </span>
               </div>
-
               <h3 className="font-display text-xl text-foreground mb-2">{product.title}</h3>
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{product.description}</p>
-
               <ul className="space-y-2 mb-6 flex-1">
-                {product.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
+                {product.features.map((f, fi) => (
+                  <li key={fi} className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Star size={12} className="text-accent flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-
               <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
-                <span className="text-2xl font-bold text-foreground">{product.price}</span>
+                <span className="text-2xl font-bold text-foreground">{prices[i]}</span>
                 <button className="btn-gold py-2 px-5 text-sm inline-flex items-center gap-1">
-                  Get Template <ArrowUpRight size={14} />
+                  {t("products.getTemplate")} <ArrowUpRight size={14} />
                 </button>
               </div>
             </motion.div>

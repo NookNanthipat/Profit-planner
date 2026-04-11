@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import SettingsMenu from "./SettingsMenu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <motion.nav
@@ -18,15 +21,19 @@ const Navbar = () => {
         </a>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <a href="#products" className="text-muted-foreground hover:text-foreground transition-colors">Products</a>
-          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-          <a href="#roadmap" className="text-muted-foreground hover:text-foreground transition-colors">Roadmap</a>
-          <a href="#cta" className="btn-gold text-sm py-2 px-6">Get Started</a>
+          <a href="#products" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.products")}</a>
+          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.features")}</a>
+          <a href="#roadmap" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.roadmap")}</a>
+          <SettingsMenu />
+          <a href="#cta" className="btn-gold text-sm py-2 px-6">{t("nav.getStarted")}</a>
         </div>
 
-        <button className="md:hidden text-foreground" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <SettingsMenu />
+          <button className="text-foreground" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {isOpen && (
@@ -35,10 +42,10 @@ const Navbar = () => {
           animate={{ opacity: 1, height: "auto" }}
           className="md:hidden bg-background border-b border-border px-6 pb-6 flex flex-col gap-4"
         >
-          <a href="#products" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>Products</a>
-          <a href="#features" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>Features</a>
-          <a href="#roadmap" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>Roadmap</a>
-          <a href="#cta" className="btn-gold text-center py-2" onClick={() => setIsOpen(false)}>Get Started</a>
+          <a href="#products" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.products")}</a>
+          <a href="#features" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.features")}</a>
+          <a href="#roadmap" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.roadmap")}</a>
+          <a href="#cta" className="btn-gold text-center py-2" onClick={() => setIsOpen(false)}>{t("nav.getStarted")}</a>
         </motion.div>
       )}
     </motion.nav>
