@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { BarChart3, Lock, Smartphone, RefreshCw, Palette, HeadphonesIcon } from "lucide-react";
+import { BarChart3, Lock, Smartphone, Sparkles, Target, FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const icons = [BarChart3, Lock, Smartphone, RefreshCw, Palette, HeadphonesIcon];
+const icons = [BarChart3, Lock, Smartphone, Sparkles, Target, FileDown];
 
 const FeaturesSection = () => {
   const { t } = useTranslation();
@@ -17,12 +17,12 @@ const FeaturesSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-semibold text-accent uppercase tracking-widest mb-3">{t("features.label")}</p>
-          <h2 className="text-3xl md:text-4xl text-foreground mb-4">{t("features.title")}</h2>
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{t("features.label")}</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{t("features.title")}</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">{t("features.description")}</p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((f, i) => {
             const Icon = icons[i];
             return (
@@ -32,12 +32,12 @@ const FeaturesSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="group"
+                className="glass-card p-6 group hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                  <Icon size={22} className="text-accent" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Icon size={22} className="text-primary" />
                 </div>
-                <h3 className="font-display text-lg text-foreground mb-2">{f.title}</h3>
+                <h3 className="font-display font-semibold text-lg text-foreground mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             );

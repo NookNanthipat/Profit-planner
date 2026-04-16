@@ -4,10 +4,10 @@ const Footer = () => {
   const { t } = useTranslation();
 
   return (
-    <footer className="border-t border-border py-10 px-6">
+    <footer className="border-t border-border/50 py-10 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-        <span className="font-display text-foreground text-lg">
-          Finn<span className="text-gradient-gold">Flow</span>
+        <span className="font-display font-bold text-foreground text-lg">
+          Profit<span className="text-gradient-emerald">Planner</span>
         </span>
         <p>{t("footer.rights", { year: new Date().getFullYear() })}</p>
         <div className="flex gap-6">

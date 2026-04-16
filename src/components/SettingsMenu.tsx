@@ -21,12 +21,11 @@ const SettingsMenu = () => {
 
   const changeLang = (code: string) => {
     i18n.changeLanguage(code);
-    localStorage.setItem("finnflow-lang", code);
+    localStorage.setItem("profitplanner-lang", code);
   };
 
   return (
     <div className="flex items-center gap-1">
-      {/* Theme toggle */}
       <button
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -36,7 +35,6 @@ const SettingsMenu = () => {
         <Moon size={18} className="block dark:hidden" />
       </button>
 
-      {/* Language picker */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
