@@ -1,85 +1,103 @@
 {
   "nav": {
-    "products": "Products",
     "features": "Features",
+    "pricing": "Pricing",
     "roadmap": "Roadmap",
     "getStarted": "Get Started"
   },
   "hero": {
-    "badge": "Smart Financial Tools",
-    "title1": "Take Control of",
-    "title2": "Your Finances",
-    "description": "Beautiful, ready-to-use financial templates and tools designed to help you track, plan, and grow your money — from personal budgets to business planning.",
-    "browseTemplates": "Browse Templates",
-    "learnMore": "Learn More",
-    "users": "500+ users",
-    "trusted": "Trusted tools",
-    "spreadsheetName": "Personal Finance Tracker.gsheet",
-    "monthlyIncome": "Monthly Income",
+    "badge": "Your money, simplified",
+    "title1": "Master Your Finances with",
+    "title2": "Real-Time Insights",
+    "description": "ProfitPlanner gives you a crystal-clear view of your income, expenses, and investments — all in one beautifully designed dashboard.",
+    "startFree": "Start Free",
+    "watchDemo": "Watch Demo",
+    "users": "2,000+ active users",
+    "rating": "4.9★ avg rating",
+    "uptime": "99.9% uptime",
+    "income": "Income",
     "expenses": "Expenses",
     "savings": "Savings",
     "investments": "Investments",
-    "netWorth": "Net Worth"
-  },
-  "products": {
-    "label": "Products",
-    "title": "Google Sheet Templates",
-    "description": "Professionally designed spreadsheets that make managing your money simple and visual.",
-    "getTemplate": "Get Template",
-    "items": [
-      {
-        "title": "Personal Finance Tracker",
-        "description": "Complete monthly income & expense tracker with automated summaries, charts, and savings goals.",
-        "badge": "Best Seller",
-        "features": ["Income & expense tracking", "Monthly/yearly summaries", "Savings goal tracker", "Visual charts"]
-      },
-      {
-        "title": "Budget Planner Pro",
-        "description": "Advanced budgeting template with category breakdowns, debt payoff calculator, and investment tracker.",
-        "badge": "Popular",
-        "features": ["50/30/20 rule built-in", "Debt snowball calculator", "Investment portfolio view", "Emergency fund tracker"]
-      },
-      {
-        "title": "Complete Finance Bundle",
-        "description": "All templates in one package — personal tracker, budget planner, net worth calculator, and more.",
-        "badge": "Best Value",
-        "features": ["All templates included", "Lifetime updates", "Video tutorials", "Priority support"]
-      }
-    ]
+    "netWorth": "Net Worth",
+    "monthlyGrowth": "Monthly Growth"
   },
   "features": {
-    "label": "Why Choose Us",
-    "title": "Built for Real Life",
-    "description": "Simple tools that actually get used — designed with care and tested by real people.",
+    "label": "Features",
+    "title": "Everything You Need to Grow Wealth",
+    "description": "Powerful tools wrapped in a simple, delightful interface.",
     "items": [
-      { "title": "Visual Dashboards", "desc": "Beautiful charts and graphs that update automatically as you enter your data." },
-      { "title": "Private & Secure", "desc": "Your data stays in your own Google Drive — no third-party access." },
-      { "title": "Works Everywhere", "desc": "Use on desktop, tablet, or phone with Google Sheets' native apps." },
-      { "title": "Auto Calculations", "desc": "Built-in formulas handle all the math — just enter your numbers." },
-      { "title": "Clean Design", "desc": "Professionally designed layouts that are easy to read and pleasant to use." },
-      { "title": "Support Included", "desc": "Get help setting up your templates with our guides and direct support." }
+      { "title": "Smart Dashboard", "desc": "Real-time charts and summaries that update as your data flows in." },
+      { "title": "Bank-Level Security", "desc": "End-to-end encryption keeps your financial data safe and private." },
+      { "title": "Multi-Device Sync", "desc": "Access your finances from any device — desktop, tablet, or phone." },
+      { "title": "Auto Categorization", "desc": "AI-powered expense categories so you spend less time logging." },
+      { "title": "Goal Tracking", "desc": "Set savings targets and watch your progress with visual milestones." },
+      { "title": "Export & Reports", "desc": "Download detailed PDF/CSV reports for tax season or personal records." }
+    ]
+  },
+  "pricing": {
+    "label": "Pricing",
+    "title": "Simple, Transparent Pricing",
+    "description": "Start for free. Upgrade when you're ready.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "plans": [
+      {
+        "name": "Free",
+        "price": "$0",
+        "period": "/month",
+        "description": "Perfect for getting started",
+        "features": ["1 bank account", "Basic dashboard", "Monthly summaries", "Email support"],
+        "cta": "Get Started"
+      },
+      {
+        "name": "Pro",
+        "price": "$9",
+        "period": "/month",
+        "description": "For serious budgeters",
+        "features": ["Unlimited accounts", "Advanced analytics", "Goal tracking", "Auto categorization", "Priority support"],
+        "cta": "Start Free Trial",
+        "popular": true
+      },
+      {
+        "name": "Business",
+        "price": "$29",
+        "period": "/month",
+        "description": "For teams & SMEs",
+        "features": ["Everything in Pro", "Multi-user access", "Invoice management", "API access", "Dedicated support"],
+        "cta": "Contact Sales"
+      }
     ]
   },
   "roadmap": {
     "label": "Roadmap",
     "title": "What's Coming Next",
-    "description": "We're building a complete ecosystem of financial tools — from personal to business.",
+    "description": "We're building a complete ecosystem — from personal finance to business tools.",
     "items": [
-      { "status": "Live", "title": "Personal Finance Google Sheet Templates", "desc": "Track income, expenses, savings, and investments with beautiful spreadsheets." },
-      { "status": "Coming Soon", "title": "Personal Finance Web App", "desc": "A full web application for managing your personal finances with automation and insights." },
-      { "status": "Planned", "title": "SME Business Planner & ERP", "desc": "Financial planning, invoicing, inventory, and reporting tools built for small and medium businesses." }
+      { "status": "Live", "title": "Personal Finance Dashboard", "desc": "Track income, expenses, savings, and investments with real-time visualizations." },
+      { "status": "Coming Soon", "title": "AI Budget Advisor", "desc": "Get personalized recommendations to optimize spending and reach goals faster." },
+      { "status": "Planned", "title": "SME Business Planner & ERP", "desc": "Invoicing, inventory, payroll, and financial reporting for small businesses." }
     ]
   },
   "cta": {
-    "title": "Ready to Master Your Money?",
-    "description": "Join our newsletter for early access to new products, financial tips, and exclusive discounts.",
+    "title": "Ready to Take Control?",
+    "description": "Join thousands who've already simplified their finances with ProfitPlanner.",
     "placeholder": "Enter your email",
-    "subscribe": "Subscribe"
+    "subscribe": "Get Early Access"
   },
   "footer": {
-    "rights": "© {{year}} FinnFlow. All rights reserved.",
+    "rights": "© {{year}} ProfitPlanner. All rights reserved.",
     "privacy": "Privacy",
     "terms": "Terms",
     "contact": "Contact"
+  },
+  "trust": {
+    "title": "Trusted by professionals worldwide",
+    "items": [
+      "256-bit SSL Encryption",
+      "SOC 2 Compliant",
+      "GDPR Ready",
+      "99.9% Uptime SLA"
+    ]
   }
 }
