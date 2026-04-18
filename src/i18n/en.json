@@ -3,7 +3,16 @@
     "features": "Features",
     "pricing": "Pricing",
     "roadmap": "Roadmap",
-    "getStarted": "Get Started"
+    "faq": "FAQ",
+    "getStarted": "Get Started",
+    "products": {
+      "label": "Products",
+      "items": [
+        { "title": "Personal Finance Dashboard", "desc": "Track income, expenses & investments in real time.", "badge": "Live" },
+        { "title": "AI Budget Advisor", "desc": "Personalized recommendations to optimize spending.", "badge": "Soon" },
+        { "title": "SME Business Planner & ERP", "desc": "Invoicing, inventory and payroll for small business.", "badge": "Planned" }
+      ]
+    }
   },
   "hero": {
     "badge": "Your money, simplified",
@@ -22,6 +31,31 @@
     "netWorth": "Net Worth",
     "monthlyGrowth": "Monthly Growth"
   },
+  "problem": {
+    "label": "The Problem",
+    "title": "Tired of Messy Spreadsheets?",
+    "description": "Most people lose hours every month wrestling with manual tracking. ProfitPlanner makes it effortless.",
+    "before": {
+      "title": "The Old Way",
+      "items": [
+        "Endless spreadsheet rows and broken formulas",
+        "Manually re-entering bank transactions",
+        "No clear picture of net worth or cash flow",
+        "Reports take hours to build — and look ugly",
+        "Data scattered across 5+ apps and notebooks"
+      ]
+    },
+    "after": {
+      "title": "With ProfitPlanner",
+      "items": [
+        "Auto-synced transactions in one dashboard",
+        "AI categorizes every expense for you",
+        "Real-time net worth and cash flow visuals",
+        "Beautiful PDF reports in one click",
+        "Everything you need in a single secure hub"
+      ]
+    }
+  },
   "features": {
     "label": "Features",
     "title": "Everything You Need to Grow Wealth",
@@ -33,6 +67,26 @@
       { "title": "Auto Categorization", "desc": "AI-powered expense categories so you spend less time logging." },
       { "title": "Goal Tracking", "desc": "Set savings targets and watch your progress with visual milestones." },
       { "title": "Export & Reports", "desc": "Download detailed PDF/CSV reports for tax season or personal records." }
+    ]
+  },
+  "suite": {
+    "label": "The Suite",
+    "title": "The ProfitPlanner Ecosystem",
+    "description": "One brand, one experience — from personal finance to full-scale business operations.",
+    "items": [
+      { "badge": "Live", "title": "Personal Finance App", "desc": "Real-time dashboards for income, expenses, savings and investments.", "cta": "Explore" },
+      { "badge": "Coming Soon", "title": "AI Budget Advisor", "desc": "Smart recommendations that learn your habits and goals.", "cta": "Join waitlist" },
+      { "badge": "Planned", "title": "SME Planner & ERP", "desc": "Invoicing, inventory, payroll and reporting in one place.", "cta": "Learn more" }
+    ]
+  },
+  "testimonials": {
+    "label": "Loved by Users",
+    "title": "What Our Customers Say",
+    "description": "Real stories from real people who took control of their finances.",
+    "items": [
+      { "name": "Sarah Mitchell", "role": "Freelance Designer", "quote": "I finally know exactly where my money goes each month. The dashboard is gorgeous and so easy to read.", "initials": "SM" },
+      { "name": "James Wong", "role": "Startup Founder", "quote": "Replaced 4 different tools and 2 spreadsheets. ProfitPlanner saves me hours every week.", "initials": "JW" },
+      { "name": "Anya Patel", "role": "Marketing Manager", "quote": "The auto-categorization is scary good. I hit my savings goal 3 months early thanks to the visual tracking.", "initials": "AP" }
     ]
   },
   "pricing": {
@@ -79,6 +133,27 @@
       { "status": "Planned", "title": "SME Business Planner & ERP", "desc": "Invoicing, inventory, payroll, and financial reporting for small businesses." }
     ]
   },
+  "faq": {
+    "label": "FAQ",
+    "title": "Frequently Asked Questions",
+    "description": "Everything you need to know before getting started.",
+    "items": [
+      { "q": "How safe is my financial data?", "a": "We use bank-level 256-bit SSL encryption and are SOC 2 compliant. Your data is encrypted both in transit and at rest, and we never sell your information." },
+      { "q": "Can I cancel my subscription anytime?", "a": "Absolutely. You can cancel your plan at any moment from your account settings — no questions asked, and no hidden fees." },
+      { "q": "How is ProfitPlanner different from my banking app?", "a": "Banking apps only show one account. ProfitPlanner aggregates all your accounts, investments, and goals into one unified dashboard with smart insights." },
+      { "q": "Do I need a credit card to start?", "a": "No. Our Free plan requires no credit card and gives you full access to the core dashboard forever." },
+      { "q": "Will there be a mobile app?", "a": "Yes — native iOS and Android apps are part of our 2025 roadmap. The web app is fully responsive in the meantime." },
+      { "q": "Will SME and ERP features be included in my plan?", "a": "The upcoming SME Business Planner will be available as a separate Business tier. Existing Pro users will get exclusive launch pricing." }
+    ]
+  },
+  "newsletter": {
+    "title": "Get Weekly Financial Tips",
+    "description": "Join 5,000+ readers getting actionable money insights every Sunday — plus early access to new ProfitPlanner products.",
+    "placeholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "success": "Thanks! Check your inbox.",
+    "privacy": "We respect your privacy. Unsubscribe anytime."
+  },
   "cta": {
     "title": "Ready to Take Control?",
     "description": "Join thousands who've already simplified their finances with ProfitPlanner.",
@@ -86,10 +161,16 @@
     "subscribe": "Get Early Access"
   },
   "footer": {
+    "tagline": "The financial command center for individuals and growing businesses.",
     "rights": "© {{year}} ProfitPlanner. All rights reserved.",
     "privacy": "Privacy",
     "terms": "Terms",
-    "contact": "Contact"
+    "contact": "Contact",
+    "columns": [
+      { "title": "Product", "links": ["Features", "Pricing", "Roadmap", "Changelog", "Integrations"] },
+      { "title": "Company", "links": ["About", "Blog", "Careers", "Press", "Contact"] },
+      { "title": "Resources", "links": ["Help Center", "Guides", "API Docs", "Community", "Status"] }
+    ]
   },
   "trust": {
     "title": "Trusted by professionals worldwide",
