@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X, ChevronDown, LayoutDashboard, Sparkles, Building2 } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Sparkles, Building2, LogOut, User as UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import SettingsMenu from "./SettingsMenu";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -21,7 +24,9 @@ interface ProductLink {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const { user, signOut } = useAuth();
   const products = t("nav.products.items", { returnObjects: true }) as ProductLink[];
+  const initial = (((user?.user_metadata?.display_name as string) || user?.email || "?")).charAt(0).toUpperCase();
 
   return (
     <motion.nav
@@ -67,7 +72,25 @@ const Navbar = () => {
           <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.faq")}</a>
           <a href="#roadmap" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.roadmap")}</a>
           <SettingsMenu />
-          <a href="#cta" className="btn-primary text-sm py-2 px-6">{t("nav.getStarted")}</a>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                {initial}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2">
+                  <UserIcon size={14} /> Account
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => signOut()}>
+                  <LogOut size={14} /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/auth" className="btn-primary text-sm py-2 px-6">Log in</Link>
+          )}
         </div>
 
         <div className="md:hidden flex items-center gap-2">
@@ -89,7 +112,11 @@ const Navbar = () => {
           <a href="#pricing" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.pricing")}</a>
           <a href="#faq" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.faq")}</a>
           <a href="#roadmap" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.roadmap")}</a>
-          <a href="#cta" className="btn-primary text-center py-2" onClick={() => setIsOpen(false)}>{t("nav.getStarted")}</a>
+          {user ? (
+            <button onClick={() => { setIsOpen(false); signOut(); }} className="btn-primary text-center py-2">Sign out</button>
+          ) : (
+            <Link to="/auth" className="btn-primary text-center py-2" onClick={() => setIsOpen(false)}>Log in</Link>
+          )}
         </motion.div>
       )}
     </motion.nav>
