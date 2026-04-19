@@ -14,7 +14,36 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 export type Profile = {
   id: string;
+  user_id: string;
   display_name: string | null;
+  email: string | null;
   avatar_url: string | null;
   created_at: string;
 };
+
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  currency: string;
+  is_active: boolean;
+  is_coming_soon: boolean;
+  app_route: string | null;
+  badge: string | null;
+  created_at: string;
+};
+
+export type EntitlementStatus = "active" | "inactive" | "trial" | "expired";
+
+export type UserProduct = {
+  id: string;
+  user_id: string;
+  product_id: string;
+  status: EntitlementStatus;
+  purchased_at: string;
+  expired_at: string | null;
+};
+
+export type AppRole = "admin" | "user";
