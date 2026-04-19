@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -18,8 +18,9 @@ const GoogleIcon = () => (
 );
 
 const Auth = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { session } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -29,9 +30,11 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const isTh = i18n.language === "th";
 
+  const redirectTo = (location.state as { from?: string } | null)?.from || "/portal";
+
   useEffect(() => {
-    if (session) navigate("/", { replace: true });
-  }, [session, navigate]);
+    if (session) navigate(redirectTo, { replace: true });
+  }, [session, navigate, redirectTo]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +45,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/portal`,
             data: { display_name: displayName },
           },
         });
@@ -55,7 +58,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: isTh ? "เข้าสู่ระบบสำเร็จ" : "Welcome back" });
-        navigate("/");
+        navigate(redirectTo);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -69,7 +72,7 @@ const Auth = () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/portal` },
     });
     if (error) {
       toast({ title: isTh ? "Google ล้มเหลว" : "Google sign-in failed", description: error.message, variant: "destructive" });
@@ -125,7 +128,14 @@ const Auth = () => {
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{isTh ? "รหัสผ่าน" : "Password"}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{isTh ? "รหัสผ่าน" : "Password"}</Label>
+                {mode === "signin" && (
+                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                    {isTh ? "ลืมรหัสผ่าน?" : "Forgot password?"}
+                  </Link>
+                )}
+              </div>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -140,12 +150,6 @@ const Auth = () => {
             </button>
           </p>
         </Card>
-
-        <p className="text-xs text-center text-muted-foreground mt-6">
-          {isTh ? "การดำเนินการต่อแสดงว่าคุณยอมรับ" : "By continuing you agree to our"}{" "}
-          <a href="#" className="underline">{isTh ? "ข้อกำหนด" : "Terms"}</a> {isTh ? "และ" : "and"}{" "}
-          <a href="#" className="underline">{isTh ? "ความเป็นส่วนตัว" : "Privacy"}</a>.
-        </p>
       </motion.div>
     </div>
   );
