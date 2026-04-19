@@ -80,8 +80,8 @@ const Navbar = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2">
-                  <UserIcon size={14} /> Account
+                <DropdownMenuItem asChild className="gap-2 cursor-pointer">
+                  <Link to="/portal"><UserIcon size={14} /> My Portal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => signOut()}>
                   <LogOut size={14} /> Sign out
@@ -89,7 +89,7 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/auth" className="btn-primary text-sm py-2 px-6">Log in</Link>
+            <Link to="/login" className="btn-primary text-sm py-2 px-6">Log in</Link>
           )}
         </div>
 
@@ -113,9 +113,12 @@ const Navbar = () => {
           <a href="#faq" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.faq")}</a>
           <a href="#roadmap" className="text-muted-foreground hover:text-foreground py-2" onClick={() => setIsOpen(false)}>{t("nav.roadmap")}</a>
           {user ? (
-            <button onClick={() => { setIsOpen(false); signOut(); }} className="btn-primary text-center py-2">Sign out</button>
+            <>
+              <Link to="/portal" className="btn-primary text-center py-2" onClick={() => setIsOpen(false)}>My Portal</Link>
+              <button onClick={() => { setIsOpen(false); signOut(); }} className="text-muted-foreground py-2">Sign out</button>
+            </>
           ) : (
-            <Link to="/auth" className="btn-primary text-center py-2" onClick={() => setIsOpen(false)}>Log in</Link>
+            <Link to="/login" className="btn-primary text-center py-2" onClick={() => setIsOpen(false)}>Log in</Link>
           )}
         </motion.div>
       )}

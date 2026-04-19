@@ -21,8 +21,8 @@ export const ProductCard = ({ product, entitlement }: Props) => {
 
   let statusBadge = <Badge variant="secondary">{product.badge || "Available"}</Badge>;
   if (isComingSoon) statusBadge = <Badge variant="outline">Coming Soon</Badge>;
-  else if (isTrial) statusBadge = <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0">Trial</Badge>;
-  else if (isActive) statusBadge = <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-0">Active</Badge>;
+  else if (isTrial) statusBadge = <Badge variant="secondary">Trial</Badge>;
+  else if (isActive) statusBadge = <Badge>Active</Badge>;
 
   return (
     <Card className="p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow border-border/60 bg-card/60 backdrop-blur">
@@ -36,7 +36,7 @@ export const ProductCard = ({ product, entitlement }: Props) => {
         <h3 className="font-semibold text-lg leading-snug">{product.name}</h3>
         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
         {isTrial && entitlement?.expired_at && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             Trial ends {new Date(entitlement.expired_at).toLocaleDateString()}
           </p>
         )}

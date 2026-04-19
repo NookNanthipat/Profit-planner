@@ -76,7 +76,7 @@ const ProfitPlannerApp = () => {
             <Card key={m.label} className="p-5">
               <p className="text-sm text-muted-foreground">{m.label}</p>
               <p className="text-2xl font-bold mt-1">{m.value}</p>
-              <p className="text-xs text-emerald-600 mt-1">{m.trend}</p>
+              <p className="text-xs text-primary mt-1">{m.trend}</p>
             </Card>
           ))}
         </div>
