@@ -1,10 +1,14 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Sparkles, Building2, ArrowRight } from "lucide-react";
+import { LayoutDashboard, Sparkles, Building2, ArrowRight, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { supabase, type Product } from "@/lib/supabase";
+import { getProductStatus } from "@/lib/productStatus";
 
 const icons = [LayoutDashboard, Sparkles, Building2];
 
-interface SuiteItem {
+interface SuiteFallback {
   badge: string;
   title: string;
   desc: string;
@@ -13,7 +17,40 @@ interface SuiteItem {
 
 const SuiteSection = () => {
   const { t } = useTranslation();
-  const items = t("suite.items", { returnObjects: true }) as SuiteItem[];
+  const fallback = t("suite.items", { returnObjects: true }) as SuiteFallback[];
+  const [products, setProducts] = useState<Product[] | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at")
+      .then(({ data }) => setProducts((data as Product[]) || []));
+  }, []);
+
+  // Use DB products if available, else fall back to i18n
+  const items = products && products.length > 0
+    ? products.map((p, i) => ({
+        product: p,
+        icon: icons[i] || LayoutDashboard,
+        badge: p.is_coming_soon ? "Coming Soon" : (p.badge || "Live"),
+        title: p.name,
+        desc: p.description || "",
+        cta: p.is_coming_soon ? t("suite.items.0.cta") : "Explore",
+        href: p.is_coming_soon ? "#" : (p.app_route || "/portal"),
+        comingSoon: p.is_coming_soon,
+      }))
+    : fallback.map((item, i) => ({
+        product: null,
+        icon: icons[i] || LayoutDashboard,
+        badge: item.badge,
+        title: item.title,
+        desc: item.desc,
+        cta: item.cta,
+        href: "#",
+        comingSoon: /coming/i.test(item.badge),
+      }));
 
   return (
     <section id="suite" className="section-padding bg-secondary/30">
@@ -35,7 +72,7 @@ const SuiteSection = () => {
 
         <div className="grid md:grid-cols-3 gap-6">
           {items.map((item, i) => {
-            const Icon = icons[i] || LayoutDashboard;
+            const Icon = item.icon;
             return (
               <motion.div
                 key={i}
@@ -47,17 +84,27 @@ const SuiteSection = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Icon size={22} />
+                    {item.comingSoon ? <Clock size={22} /> : <Icon size={22} />}
                   </div>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    item.comingSoon
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-primary/10 text-primary"
+                  }`}>
                     {item.badge}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-foreground mb-2">{item.title}</h3>
                 <p className="text-sm text-muted-foreground flex-1">{item.desc}</p>
-                <a href="#" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary mt-5 hover:gap-2.5 transition-all">
-                  {item.cta} <ArrowRight size={14} />
-                </a>
+                {item.comingSoon ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mt-5">
+                    {item.cta}
+                  </span>
+                ) : (
+                  <Link to={item.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary mt-5 hover:gap-2.5 transition-all">
+                    {item.cta} <ArrowRight size={14} />
+                  </Link>
+                )}
               </motion.div>
             );
           })}
