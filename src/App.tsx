@@ -12,7 +12,10 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Portal from "./pages/Portal.tsx";
 import Checkout from "./pages/Checkout.tsx";
-import Admin from "./pages/Admin.tsx";
+import AdminLayout from "./components/admin/AdminLayout.tsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
+import AdminProducts from "./pages/admin/AdminProducts.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import ProfitPlannerApp from "./pages/ProfitPlannerApp.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -34,7 +37,11 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />
               <Route path="/checkout/:slug" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="users" element={<AdminUsers />} />
+              </Route>
               <Route path="/app/profit-planner" element={<ProtectedRoute><ProfitPlannerApp /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
