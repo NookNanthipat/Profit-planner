@@ -16,7 +16,10 @@ import AdminLayout from "./components/admin/AdminLayout.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminProducts from "./pages/admin/AdminProducts.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
-import ProfitPlannerApp from "./pages/ProfitPlannerApp.tsx";
+import ProfitPlannerLayout from "./pages/app/ProfitPlannerLayout.tsx";
+import ProfitPlannerDashboard from "./pages/app/profit-planner/Dashboard.tsx";
+import ProfitPlannerTransactions from "./pages/app/profit-planner/Transactions.tsx";
+import ProfitPlannerSetup from "./pages/app/profit-planner/Setup.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,7 +45,12 @@ const App = () => (
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="users" element={<AdminUsers />} />
               </Route>
-              <Route path="/app/profit-planner" element={<ProtectedRoute><ProfitPlannerApp /></ProtectedRoute>} />
+              <Route path="/app/profit-planner" element={<ProtectedRoute><ProfitPlannerLayout /></ProtectedRoute>}>
+                <Route index element={<ProfitPlannerDashboard />} />
+                <Route path="dashboard" element={<ProfitPlannerDashboard />} />
+                <Route path="transactions" element={<ProfitPlannerTransactions />} />
+                <Route path="setup" element={<ProfitPlannerSetup />} />
+              </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
