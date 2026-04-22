@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { ArrowLeft, LayoutDashboard, ListPlus, Loader2, Lock, Settings, Wallet } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, ListPlus, Loader2, Lock, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { seedDefaultCategoriesIfEmpty } from "@/lib/profitPlanner";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/profitplanner-logo.png";
 
 const NAV = [
   { to: "/app/profit-planner/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -71,15 +72,13 @@ const ProfitPlannerLayout = () => {
       {/* Top bar */}
       <header className="border-b border-border/60 bg-background/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground shrink-0">
-              <Wallet size={18} />
-            </div>
+          <Link to="/app/profit-planner/dashboard" className="flex items-center gap-3 min-w-0">
+            <img src={logo} alt="ProfitPlanner logo" className="w-9 h-9 rounded-lg object-contain shrink-0" />
             <div className="min-w-0">
               <p className="font-display font-bold leading-tight truncate">ProfitPlanner</p>
               <p className="text-[11px] text-muted-foreground leading-tight hidden sm:block">Ultimate Personal Finance App</p>
             </div>
-          </div>
+          </Link>
           <Button variant="ghost" size="sm" asChild>
             <Link to="/portal" className="gap-1.5">
               <ArrowLeft size={14} /> <span className="hidden sm:inline">Portal</span>
