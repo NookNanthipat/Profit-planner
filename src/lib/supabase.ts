@@ -25,13 +25,17 @@ export type Product = {
   id: string;
   slug: string;
   name: string;
+  name_th: string | null;
   description: string | null;
+  description_th: string | null;
   price_cents: number;
   currency: string;
   is_active: boolean;
   is_coming_soon: boolean;
   app_route: string | null;
   badge: string | null;
+  price_thb: number | null;
+  sort_order: number;
   created_at: string;
 };
 

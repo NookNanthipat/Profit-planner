@@ -1,63 +1,120 @@
+import React from "react";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Quote, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-interface Testimonial {
-  name: string;
-  role: string;
-  quote: string;
-  initials: string;
-}
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
+import { useAdminEdit } from "@/context/AdminEditContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const TestimonialsSection = () => {
-  const { t } = useTranslation();
-  const items = t("testimonials.items", { returnObjects: true }) as Testimonial[];
+  const { i18n } = useTranslation();
+  const isThai = i18n.language?.startsWith("th");
+  const { isEditMode } = useAdminEdit();
+  const { toast } = useToast();
+  const { ds, dsList, refresh, overrides } = useSiteContent("testimonials");
+  const items = dsList("testimonials_list", "testimonials.items");
+
+  const saveList = async (newList: any[]) => {
+    try {
+      const { error } = await supabase.from("pp_site_content").upsert({
+        section: "testimonials",
+        key: "testimonials_list",
+        value_en: JSON.stringify(newList),
+        value_th: JSON.stringify(newList),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'section,key' });
+      if (error) throw error;
+      toast({ title: "Testimonials updated" });
+      refresh();
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const addItem = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newItem = { initials: "JD", name: "John Doe", role: "Investor", quote: "ProfitPlanner changed my life." };
+    saveList([...items, newItem]);
+  };
+
+  const removeItem = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Remove this testimonial?")) return;
+    const newList = [...items];
+    newList.splice(index, 1);
+    saveList(newList);
+  };
 
   return (
     <section id="testimonials" className="section-padding">
       <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <span className="text-primary text-sm font-semibold uppercase tracking-wider">
-            {t("testimonials.label")}
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-3">
-            {t("testimonials.title")}
+        <div className="text-center mb-16">
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">
+             <EditableText section="testimonials" fieldKey="label" defaultValue={ds("label", "testimonials.label")} />
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+             <EditableText section="testimonials" fieldKey="title" defaultValue={ds("title", "testimonials.title")} />
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{t("testimonials.description")}</p>
-        </motion.div>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+             <EditableText section="testimonials" fieldKey="description" defaultValue={ds("description", "testimonials.description")} multiline />
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {items.map((item, i) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {items.map((testimonial, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="glass-card p-6 flex flex-col"
+              className="glass-card p-8 relative hover:-translate-y-2 transition-all duration-500 group"
             >
-              <div className="flex gap-0.5 text-primary mb-4">
-                {[...Array(5)].map((_, s) => (
-                  <Star key={s} size={16} fill="currentColor" />
-                ))}
+              {isEditMode && (
+                <button 
+                  onClick={(e) => removeItem(e, i)}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-500/10 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500 hover:text-white z-20"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+              <div className="absolute top-8 right-8 text-primary/10">
+                <Quote size={48} />
               </div>
-              <p className="text-foreground/90 mb-6 flex-1 leading-relaxed">"{item.quote}"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center font-semibold">
-                  {item.initials}
+              
+              <p className="text-lg italic text-foreground mb-8 relative z-10 leading-relaxed">
+                 <EditableText section="testimonials" fieldKey={`item_quote_${i}`} defaultValue={testimonial.quote} multiline />
+              </p>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary shadow-inner">
+                   <EditableText section="testimonials" fieldKey={`item_initials_${i}`} defaultValue={testimonial.initials} />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground text-sm">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.role}</p>
+                  <h4 className="font-bold text-foreground">
+                     <EditableText section="testimonials" fieldKey={`item_name_${i}`} defaultValue={testimonial.name} />
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                     <EditableText section="testimonials" fieldKey={`item_role_${i}`} defaultValue={testimonial.role} />
+                  </p>
                 </div>
               </div>
             </motion.div>
           ))}
+
+          {isEditMode && (
+            <button 
+              onClick={addItem}
+              className="p-8 rounded-[32px] border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all group min-h-[300px]"
+            >
+              <Plus size={32} />
+              <span className="font-black uppercase text-xs tracking-widest">Add Testimonial</span>
+            </button>
+          )}
         </div>
       </div>
     </section>

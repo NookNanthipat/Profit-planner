@@ -4,59 +4,129 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Product, UserProduct } from "@/lib/supabase";
+import { useTranslation } from "react-i18next";
+import { EditableText } from "../admin/EditableText";
+import { EditableButton } from "../admin/EditableButton";
 
 interface Props {
   product: Product;
   entitlement?: UserProduct;
 }
 
-const formatPrice = (cents: number, currency: string) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
+const formatPrice = (product: Product, lang: string) => {
+  const isThai = lang.startsWith("th");
+  if (isThai) {
+    const value = product.price_thb !== null ? product.price_thb : (product.price_cents / 100) * 35;
+    return new Intl.NumberFormat("th-TH", { 
+      style: "currency", 
+      currency: "THB",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  } else {
+    const value = product.price_cents / 100;
+    return new Intl.NumberFormat("en-US", { 
+      style: "currency", 
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  }
+};
 
-export const ProductCard = ({ product, entitlement }: Props) => {
+const ProductCard = ({ product, entitlement }: Props) => {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language || "en";
+  const isThai = lang.startsWith("th");
+  const displayName = isThai && product.name_th ? product.name_th : product.name;
+  const displayDesc = isThai && product.description_th ? product.description_th : product.description;
+
   const isComingSoon = product.is_coming_soon;
   const isActive = entitlement && (entitlement.status === "active" || entitlement.status === "trial") &&
     (!entitlement.expired_at || new Date(entitlement.expired_at) > new Date());
   const isTrial = isActive && entitlement?.status === "trial";
+  
+  // A user has a "Free Version" if they have an entitlement but the product's primary price is 0
+  const isFreeVersion = isActive && product.price_cents === 0;
 
-  let statusBadge = <Badge variant="secondary">{product.badge || "Available"}</Badge>;
-  if (isComingSoon) statusBadge = <Badge variant="outline">Coming Soon</Badge>;
-  else if (isTrial) statusBadge = <Badge variant="secondary">Trial</Badge>;
-  else if (isActive) statusBadge = <Badge>Active</Badge>;
+  const getBadgeText = () => {
+    if (isComingSoon) return t("product.coming_soon") === "product.coming_soon" ? "Coming Soon" : t("product.coming_soon");
+    if (isTrial) return t("product.trial") === "product.trial" ? "Trial" : t("product.trial");
+    if (isActive) {
+      if (isFreeVersion) return "Free Version";
+      return t("nav.active") === "nav.active" ? "Active" : t("nav.active");
+    }
+    return product.badge || (t("nav.available") === "nav.available" ? "Available" : t("nav.available"));
+  };
 
   return (
-    <Card className="p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow border-border/60 bg-card/60 backdrop-blur">
+    <Card className="p-6 flex flex-col gap-5 hover:shadow-2xl transition-all duration-500 border-border/60 bg-card/60 backdrop-blur rounded-[32px] group">
       <div className="flex items-start justify-between gap-3">
-        <div className="w-11 h-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-          {isComingSoon ? <Clock size={20} /> : isActive ? <Sparkles size={20} /> : <Lock size={20} />}
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+          {isComingSoon ? <Clock size={22} /> : isActive ? <Sparkles size={22} /> : <Lock size={22} />}
         </div>
-        {statusBadge}
+        <Badge variant={isComingSoon ? "outline" : (isActive && !isTrial ? "default" : "secondary")} className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+          {getBadgeText()}
+        </Badge>
       </div>
-      <div className="flex-1">
-        <h3 className="font-semibold text-lg leading-snug">{product.name}</h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
+
+      <div className="flex-1 space-y-2">
+        <h3 className="font-bold text-xl leading-tight">
+          <EditableText 
+            section="products" 
+            fieldKey={`${product.id}_name`} 
+            defaultValue={displayName || ""} 
+          />
+        </h3>
+        <div className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+          <EditableText 
+            section="products" 
+            fieldKey={`${product.id}_description`} 
+            defaultValue={displayDesc || ""} 
+            multiline
+          />
+        </div>
         {isTrial && entitlement?.expired_at && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Trial ends {new Date(entitlement.expired_at).toLocaleDateString()}
+          <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-4 bg-primary/5 inline-block px-3 py-1 rounded-lg">
+            {t("product.trial_ends") || "Trial ends"} {new Date(entitlement.expired_at).toLocaleDateString()}
           </p>
         )}
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-border/40">
-        <span className="text-sm font-medium">
-          {product.price_cents === 0 ? "Free" : formatPrice(product.price_cents, product.currency)}
-        </span>
+
+      <div className="flex items-center justify-between pt-5 border-t border-border/40">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black uppercase opacity-40 leading-none mb-1">
+            {isThai ? "ราคาเริ่มต้น" : "Starting from"}
+          </span>
+          <span className="text-xl font-black text-foreground tracking-tighter">
+             {formatPrice(product, lang)}
+          </span>
+        </div>
+        
         {isComingSoon ? (
-          <Button size="sm" variant="ghost" disabled>Coming Soon</Button>
+          <Button size="lg" variant="ghost" disabled className="rounded-2xl px-6 font-bold text-xs uppercase tracking-widest">{t("product.coming_soon") === "product.coming_soon" ? "Soon" : t("product.coming_soon")}</Button>
         ) : isActive && product.app_route ? (
-          <Button size="sm" asChild>
-            <Link to={product.app_route}>Open App <ArrowRight size={14} /></Link>
-          </Button>
+          <EditableButton 
+             section="products"
+             fieldKey={`${product.id}_action`}
+             defaultLabel={t("product.open_app") === "product.open_app" ? "Open Application" : t("product.open_app")}
+             defaultHref={product.app_route || "#"}
+             className="btn-primary h-14 text-[11px] font-black uppercase tracking-widest rounded-[22px] px-8 flex items-center gap-2 shadow-xl shadow-primary/20 hover:scale-105 transition-all"
+             targetCols={{ label: isThai ? "name_th" : "name", href: "app_route" }}
+          />
         ) : (
-          <Button size="sm" asChild variant="default">
-            <Link to={`/checkout/${product.slug}`}>Buy Now</Link>
-          </Button>
+          <EditableButton 
+             section="products"
+             fieldKey={`${product.id}_action`}
+             defaultLabel={t("product.buy_now") === "product.buy_now" ? "Unlock Now" : t("product.buy_now")}
+             defaultHref={`/checkout/${product.slug}`}
+             className="btn-primary h-12 text-[10px] font-black uppercase tracking-widest rounded-2xl px-6 hover:scale-105 transition-all shadow-lg"
+             targetCols={{ label: isThai ? "name_th" : "name", href: "slug" }}
+          />
         )}
       </div>
     </Card>
   );
 };
+
+export default ProductCard;

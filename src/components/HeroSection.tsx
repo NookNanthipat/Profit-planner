@@ -1,21 +1,64 @@
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Play, Users, Star, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
+import { EditableImage } from "./admin/EditableImage";
+import { EditableButton } from "./admin/EditableButton";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { DemoModal } from "./portal/DemoModal";
 
 const HeroSection = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { t } = useTranslation();
+  const { ds, overrides } = useSiteContent("hero");
+  const heroImg = overrides["hero_image"] || "";
+  const [demoOpen, setDemoOpen] = useState(false);
 
   const chartData = [35, 42, 58, 45, 65, 52, 78, 62, 85, 72, 90, 95];
   const rows = [
-    { label: t("hero.income"), value: "$4,850", change: "+12%", positive: true },
-    { label: t("hero.expenses"), value: "$2,340", change: "-5%", positive: true },
-    { label: t("hero.savings"), value: "$1,510", change: "+24%", positive: true },
-    { label: t("hero.investments"), value: "$820", change: "+8%", positive: true },
+    { label: ds("income", "hero.income"), value: "$4,850", change: "+12%", positive: true },
+    { label: ds("expenses", "hero.expenses"), value: "$2,340", change: "-5%", positive: true },
+    { label: ds("savings", "hero.savings"), value: "$1,510", change: "+24%", positive: true },
+    { label: ds("investments", "hero.investments"), value: "$820", change: "+8%", positive: true },
   ];
+
+  const handleStartFree = async (e: React.MouseEvent) => {
+    // If not admin editing, handle free entitlement
+    if (overrides["_editMode"]) return; 
+    
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      // Find the main product (ProfitPlanner)
+      const { data: product } = await supabase.from("products").select("id").eq("slug", "profit-planner").single();
+      if (!product) throw new Error("Product not found");
+
+      // Grant trial access (for free version)
+      const { error } = await supabase.from("user_products").upsert({
+        user_id: user.id,
+        product_id: product.id,
+        status: "trial",
+        purchased_at: new Date().toISOString()
+      }, { onConflict: 'user_id,product_id' });
+
+      if (error) throw error;
+      toast({ title: "Free Access Granted", description: "You can now use the dashboard and transactions!" });
+      window.location.href = "/portal";
+    } catch (err: any) {
+      toast({ title: "Registration failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center section-padding pt-32 overflow-hidden">
-      {/* Background glow effects */}
       <div className="absolute top-20 right-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse-glow" />
       <div className="absolute bottom-20 left-10 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
 
@@ -28,39 +71,52 @@ const HeroSection = () => {
           >
             <div className="inline-flex items-center gap-2 glass-card px-4 py-1.5 text-sm font-medium text-muted-foreground mb-6">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {t("hero.badge")}
+              <EditableText section="hero" fieldKey="badge" defaultValue={ds("badge", "hero.badge")} />
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold leading-[1.1] text-foreground mb-6">
-              {t("hero.title1")}{" "}
-              <span className="text-gradient-emerald">{t("hero.title2")}</span>
+              <EditableText section="hero" fieldKey="title1" defaultValue={ds("title1", "hero.title1")} />{" "}
+              <span className="text-gradient-emerald">
+                <EditableText section="hero" fieldKey="title2" defaultValue={ds("title2", "hero.title2")} />
+              </span>
             </h1>
 
             <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-              {t("hero.description")}
+              <EditableText section="hero" fieldKey="description" defaultValue={ds("description", "hero.description")} multiline />
             </p>
 
             <div className="flex flex-wrap gap-4 mb-12">
-              <a href="#cta" className="btn-primary inline-flex items-center gap-2">
-                {t("hero.startFree")} <ArrowRight size={18} />
-              </a>
-              <button className="btn-outline inline-flex items-center gap-2">
-                <Play size={16} /> {t("hero.watchDemo")}
+              <button 
+                onClick={handleStartFree}
+                className="btn-primary inline-flex items-center gap-2 relative group"
+              >
+                <span className="relative z-10">
+                   <EditableText section="hero" fieldKey="startFree" defaultValue={ds("startFree", "hero.startFree")} />
+                </span>
+                <ArrowRight size={18} className="relative z-10" />
+              </button>
+              
+              <button 
+                onClick={(e) => { e.preventDefault(); setDemoOpen(true); }}
+                className="btn-outline inline-flex items-center gap-2"
+              >
+                <Play size={16} /> 
+                <EditableText section="hero" fieldKey="watchDemo" defaultValue={ds("watchDemo", "hero.watchDemo")} />
               </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-primary" />
-                <span>{t("hero.users")}</span>
+                <span><EditableText section="hero" fieldKey="users" defaultValue={ds("users", "hero.users")} /></span>
               </div>
               <div className="flex items-center gap-2">
                 <Star size={16} className="text-primary" />
-                <span>{t("hero.rating")}</span>
+                <span><EditableText section="hero" fieldKey="rating" defaultValue={ds("rating", "hero.rating")} /></span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield size={16} className="text-primary" />
-                <span>{t("hero.uptime")}</span>
+                <span><EditableText section="hero" fieldKey="uptime" defaultValue={ds("uptime", "hero.uptime")} /></span>
               </div>
             </div>
           </motion.div>
@@ -72,68 +128,62 @@ const HeroSection = () => {
             className="relative hidden lg:block"
           >
             <div className="relative animate-float">
-              {/* Main dashboard card */}
-              <div className="glass-card p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-destructive/60" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
-                    <div className="w-3 h-3 rounded-full bg-primary/60" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">ProfitPlanner Dashboard</span>
-                </div>
-
-                {/* Mini chart */}
-                <div className="h-24 bg-secondary/50 rounded-xl flex items-end gap-1 p-3 mb-5">
-                  {chartData.map((h, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ duration: 0.6, delay: 0.4 + i * 0.05 }}
-                      className="flex-1 bg-primary/80 rounded-sm"
-                    />
-                  ))}
-                </div>
-
-                {/* Data rows */}
-                <div className="space-y-3">
-                  {rows.map((row) => (
-                    <div key={row.label} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                      <span className="text-sm text-muted-foreground">{row.label}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-foreground">{row.value}</span>
-                        <span className="text-xs font-medium text-primary">{row.change}</span>
-                      </div>
+              <EditableImage 
+                section="hero" 
+                fieldKey="hero_image" 
+                defaultSrc={heroImg} 
+                className="w-full h-auto"
+                aspectRatio="aspect-[4/3]"
+              >
+                <div className="glass-card p-6 rounded-[32px] border-primary/20 shadow-2xl overflow-visible relative">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-destructive/60" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
+                      <div className="w-3 h-3 rounded-full bg-primary/60" />
                     </div>
-                  ))}
+                    <span className="text-xs text-muted-foreground font-medium">ProfitPlanner Dashboard</span>
+                  </div>
+                  <div className="h-24 bg-secondary/50 rounded-xl flex items-end gap-1 p-3 mb-5">
+                    {chartData.map((h, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ duration: 0.6, delay: 0.4 + i * 0.05 }}
+                        className="flex-1 bg-primary/80 rounded-sm"
+                      />
+                    ))}
+                  </div>
+                  <div className="space-y-3">
+                    {rows.map((row) => (
+                      <div key={row.label} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
+                        <span className="text-sm text-muted-foreground">{row.label}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-foreground">{row.value}</span>
+                          <span className="text-xs font-medium text-primary">{row.change}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.8 }}
+                    className="absolute -bottom-4 -left-4 glass-card px-4 py-3 border-primary/30 z-10"
+                  >
+                    <p className="text-xs font-medium text-muted-foreground">
+                       <EditableText section="hero" fieldKey="netWorth" defaultValue={ds("netWorth", "hero.netWorth")} />
+                    </p>
+                    <p className="text-lg font-bold text-primary">+23.5%</p>
+                  </motion.div>
                 </div>
-              </div>
-
-              {/* Floating badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="absolute -bottom-4 -left-4 glass-card px-4 py-3 border-primary/30"
-              >
-                <p className="text-xs font-medium text-muted-foreground">{t("hero.netWorth")}</p>
-                <p className="text-lg font-bold text-primary">+23.5%</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 1 }}
-                className="absolute -top-3 -right-3 glass-card px-4 py-3 border-primary/30"
-              >
-                <p className="text-xs font-medium text-muted-foreground">{t("hero.monthlyGrowth")}</p>
-                <p className="text-lg font-bold text-primary">$1,510</p>
-              </motion.div>
+              </EditableImage>
             </div>
           </motion.div>
         </div>
       </div>
+      <DemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </section>
   );
 };

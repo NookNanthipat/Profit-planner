@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +27,7 @@ interface Props {
 }
 
 const CategoryForm = ({ open, onOpenChange, category, defaultType = "expense", onSaved }: Props) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(category?.name ?? "");
@@ -38,7 +40,7 @@ const CategoryForm = ({ open, onOpenChange, category, defaultType = "expense", o
     if (!user) return;
     const parsed = schema.safeParse({ name, type, icon, color });
     if (!parsed.success) {
-      toast({ title: "Invalid input", description: parsed.error.issues[0].message, variant: "destructive" });
+      toast({ title: t("app.common.error"), description: parsed.error.issues[0].message, variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -48,10 +50,10 @@ const CategoryForm = ({ open, onOpenChange, category, defaultType = "expense", o
       : await supabase.from("pp_categories").insert(payload);
     setSaving(false);
     if (res.error) {
-      toast({ title: "Error", description: res.error.message, variant: "destructive" });
+      toast({ title: t("app.common.error"), description: res.error.message, variant: "destructive" });
       return;
     }
-    toast({ title: category ? "Category updated" : "Category created" });
+    toast({ title: t("app.common.success") });
     onSaved();
     onOpenChange(false);
   };
@@ -60,39 +62,39 @@ const CategoryForm = ({ open, onOpenChange, category, defaultType = "expense", o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{category ? "Edit category" : "New category"}</DialogTitle>
+          <DialogTitle>{category ? t("app.common.edit") : t("app.setup.newCategory")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-[80px_1fr] gap-3">
             <div className="space-y-2">
-              <Label>Icon</Label>
+              <Label>{t("app.forms.icon")}</Label>
               <Input value={icon} onChange={(e) => setIcon(e.target.value)} maxLength={4} className="text-center text-lg" />
             </div>
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t("app.forms.name")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Coffee" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t("app.forms.type")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as TxType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="expense">Expense</SelectItem>
-                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="expense">{t("app.common.expense")}</SelectItem>
+                  <SelectItem value="income">{t("app.common.income")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Color</Label>
+              <Label>{t("app.forms.color")}</Label>
               <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 p-1" />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("app.common.cancel")}</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? t("app.common.save") + "..." : t("app.common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

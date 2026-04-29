@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/profitplanner-logo.png";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -90,8 +91,13 @@ const Auth = () => {
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-            Profit<span className="text-gradient-emerald">Planner</span>
+          <Link to="/" className="flex flex-col items-center gap-4 group">
+            <div className="w-16 h-16 rounded-[22px] bg-white dark:bg-muted shadow-xl flex items-center justify-center p-3 group-hover:scale-110 transition-transform">
+              <img src={logo} alt="ProfitPlanner" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-display text-3xl font-black tracking-tighter">
+              Profit<span className="text-emerald-500">Planner</span>
+            </span>
           </Link>
           <h1 className="mt-6 text-2xl font-semibold text-foreground">
             {mode === "signin" ? (isTh ? "เข้าสู่ระบบ" : "Welcome back") : isTh ? "สร้างบัญชี" : "Create your account"}

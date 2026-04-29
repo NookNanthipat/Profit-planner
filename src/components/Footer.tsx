@@ -1,48 +1,52 @@
+import { Link } from "react-router-dom";
+import { Twitter, Github, Linkedin, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Twitter, Linkedin, Github, Facebook } from "lucide-react";
-
-interface FooterColumn {
-  title: string;
-  links: string[];
-}
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
 
 const Footer = () => {
   const { t } = useTranslation();
-  const columns = t("footer.columns", { returnObjects: true }) as FooterColumn[];
+  const { ds } = useSiteContent("footer");
+  const rawColumns = t("footer.columns", { returnObjects: true });
+  const columns = Array.isArray(rawColumns) ? rawColumns : [];
 
   return (
-    <footer className="border-t border-border/50 pt-16 pb-8 px-6 bg-secondary/20">
+    <footer className="bg-background border-t border-border/40 section-padding py-20 overflow-hidden">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
           <div className="col-span-2">
-            <span className="font-display font-bold text-foreground text-xl">
+            <Link to="/" className="font-display text-2xl font-bold mb-6 inline-block">
               Profit<span className="text-gradient-emerald">Planner</span>
-            </span>
-            <p className="text-sm text-muted-foreground mt-3 max-w-xs">
-              {t("footer.tagline")}
+            </Link>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-xs">
+               <EditableText section="footer" fieldKey="tagline" defaultValue={ds("tagline", "footer.tagline")} multiline />
             </p>
-            <div className="flex gap-3 mt-5">
-              {[Twitter, Linkedin, Facebook, Github].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-9 h-9 rounded-lg border border-border bg-background/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors"
-                  aria-label="Social link"
-                >
-                  <Icon size={16} />
-                </a>
-              ))}
+            <div className="flex gap-4">
+              <a href="#" className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300">
+                <Twitter size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300">
+                <Github size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300">
+                <Linkedin size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300">
+                <Mail size={18} />
+              </a>
             </div>
           </div>
 
-          {columns.map((col, i) => (
+          {Array.isArray(columns) && columns.map((column, i) => (
             <div key={i}>
-              <h4 className="font-semibold text-foreground mb-4 text-sm">{col.title}</h4>
-              <ul className="space-y-2.5">
-                {col.links.map((link, j) => (
-                  <li key={j}>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link}
+              <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-foreground">
+                 <EditableText section="footer" fieldKey={`col_title_${i}`} defaultValue={ds(`col_title_${i}`, `footer.columns.${i}.title`)} />
+              </h4>
+              <ul className="space-y-4">
+                {Array.isArray(column.links) && column.links.map((link: string, li: number) => (
+                  <li key={li}>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300">
+                       <EditableText section="footer" fieldKey={`col_${i}_link_${li}`} defaultValue={ds(`col_${i}_link_${li}`, `footer.columns.${i}.links.${li}`)} />
                     </a>
                   </li>
                 ))}
@@ -51,12 +55,20 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="pt-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
-          <p>{t("footer.rights", { year: new Date().getFullYear() })}</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground transition-colors">{t("footer.privacy")}</a>
-            <a href="#" className="hover:text-foreground transition-colors">{t("footer.terms")}</a>
-            <a href="#" className="hover:text-foreground transition-colors">{t("footer.contact")}</a>
+        <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-muted-foreground font-medium">
+          <p>
+             <EditableText section="footer" fieldKey="rights" defaultValue={ds("rights", "footer.rights").replace("{{year}}", new Date().getFullYear().toString())} />
+          </p>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+               <EditableText section="footer" fieldKey="privacy" defaultValue={ds("privacy", "footer.privacy")} />
+            </a>
+            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+               <EditableText section="footer" fieldKey="terms" defaultValue={ds("terms", "footer.terms")} />
+            </a>
+            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+               <EditableText section="footer" fieldKey="contact" defaultValue={ds("contact", "footer.contact")} />
+            </a>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const AccountForm = ({ open, onOpenChange, account, onSaved }: Props) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(account?.name ?? "");
@@ -39,7 +41,7 @@ const AccountForm = ({ open, onOpenChange, account, onSaved }: Props) => {
       name, type, currency, opening_balance: Number(opening) || 0,
     });
     if (!parsed.success) {
-      toast({ title: "Invalid input", description: parsed.error.issues[0].message, variant: "destructive" });
+      toast({ title: t("app.common.error"), description: parsed.error.issues[0].message, variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -49,10 +51,10 @@ const AccountForm = ({ open, onOpenChange, account, onSaved }: Props) => {
       : await supabase.from("pp_accounts").insert(payload);
     setSaving(false);
     if (res.error) {
-      toast({ title: "Error", description: res.error.message, variant: "destructive" });
+      toast({ title: t("app.common.error"), description: res.error.message, variant: "destructive" });
       return;
     }
-    toast({ title: account ? "Account updated" : "Account created" });
+    toast({ title: t("app.common.success") });
     onSaved();
     onOpenChange(false);
   };
@@ -61,39 +63,38 @@ const AccountForm = ({ open, onOpenChange, account, onSaved }: Props) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{account ? "Edit account" : "New account"}</DialogTitle>
+          <DialogTitle>{account ? t("app.common.edit") : t("app.setup.newSource")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label>{t("app.forms.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SCB Main" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t("app.forms.type")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as AccountType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="bank">Bank</SelectItem>
-                  <SelectItem value="credit">Credit Card</SelectItem>
-                  <SelectItem value="ewallet">E-Wallet</SelectItem>
+                  {["cash", "bank", "credit", "ewallet"].map(k => (
+                    <SelectItem key={k} value={k}>{t(`app.types.account.${k}`)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Currency</Label>
+              <Label>{t("app.forms.currency")}</Label>
               <Input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} maxLength={6} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Opening balance</Label>
+            <Label>{t("app.forms.openingBalance")}</Label>
             <Input type="number" step="0.01" value={opening} onChange={(e) => setOpening(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("app.common.cancel")}</Button>
+          <Button onClick={submit} disabled={saving}>{saving ? t("app.common.save") + "..." : t("app.common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

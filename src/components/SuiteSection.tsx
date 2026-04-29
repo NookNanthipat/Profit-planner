@@ -1,78 +1,78 @@
-import { useEffect, useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Sparkles, Building2, ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Sparkles, Building2, LayoutDashboard, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { supabase, type Product } from "@/lib/supabase";
-import { getProductStatus } from "@/lib/productStatus";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
+import { EditableButton } from "./admin/EditableButton";
+import { useAdminEdit } from "@/context/AdminEditContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
-const icons = [LayoutDashboard, Sparkles, Building2];
-
-interface SuiteFallback {
-  badge: string;
-  title: string;
-  desc: string;
-  cta: string;
-}
+const iconMap: any = {
+  "Personal Finance App": LayoutDashboard,
+  "AI Budget Advisor": Sparkles,
+  "SME Planner & ERP": Building2,
+};
 
 const SuiteSection = () => {
   const { t } = useTranslation();
-  const fallback = t("suite.items", { returnObjects: true }) as SuiteFallback[];
-  const [products, setProducts] = useState<Product[] | null>(null);
+  const { isEditMode } = useAdminEdit();
+  const { toast } = useToast();
+  const { ds, dsList, refresh, overrides } = useSiteContent("suite");
+  const items = dsList("suite_list", "suite.items");
 
-  useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at")
-      .then(({ data }) => setProducts((data as Product[]) || []));
-  }, []);
+  const saveList = async (newList: any[]) => {
+    try {
+      const { error } = await supabase.from("pp_site_content").upsert({
+        section: "suite",
+        key: "suite_list",
+        value_en: JSON.stringify(newList),
+        value_th: JSON.stringify(newList),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'section,key' });
+      if (error) throw error;
+      toast({ title: "Suite updated" });
+      refresh();
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e.message, variant: "destructive" });
+    }
+  };
 
-  // Use DB products if available, else fall back to i18n
-  const items = products && products.length > 0
-    ? products.map((p, i) => ({
-        product: p,
-        icon: icons[i] || LayoutDashboard,
-        badge: p.is_coming_soon ? "Coming Soon" : (p.badge || "Live"),
-        title: p.name,
-        desc: p.description || "",
-        cta: p.is_coming_soon ? t("suite.items.0.cta") : "Explore",
-        href: p.is_coming_soon ? "#" : (p.app_route || "/portal"),
-        comingSoon: p.is_coming_soon,
-      }))
-    : fallback.map((item, i) => ({
-        product: null,
-        icon: icons[i] || LayoutDashboard,
-        badge: item.badge,
-        title: item.title,
-        desc: item.desc,
-        cta: item.cta,
-        href: "#",
-        comingSoon: /coming/i.test(item.badge),
-      }));
+  const addItem = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newItem = { badge: "New", title: "New Product", desc: "Description here.", cta: "Learn More" };
+    saveList([...items, newItem]);
+  };
+
+  const removeItem = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Remove this product?")) return;
+    const newList = [...items];
+    newList.splice(index, 1);
+    saveList(newList);
+  };
 
   return (
-    <section id="suite" className="section-padding bg-secondary/30">
+    <section id="suite" className="section-padding bg-slate-50 dark:bg-slate-950/50">
       <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <span className="text-primary text-sm font-semibold uppercase tracking-wider">
-            {t("suite.label")}
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-3 mb-3">
-            {t("suite.title")}
+        <div className="text-center mb-16">
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">
+             <EditableText section="suite" fieldKey="label" defaultValue={ds("label", "suite.label")} />
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+             <EditableText section="suite" fieldKey="title" defaultValue={ds("title", "suite.title")} />
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{t("suite.description")}</p>
-        </motion.div>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+             <EditableText section="suite" fieldKey="description" defaultValue={ds("description", "suite.description")} multiline />
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {items.map((item, i) => {
-            const Icon = item.icon;
+            const Icon = iconMap[item.title] || LayoutDashboard;
             return (
               <motion.div
                 key={i}
@@ -80,34 +80,52 @@ const SuiteSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="glass-card p-6 flex flex-col"
+                className="glass-card p-8 group flex flex-col items-center text-center hover:scale-[1.02] transition-all duration-500 relative"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    {item.comingSoon ? <Clock size={22} /> : <Icon size={22} />}
-                  </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    item.comingSoon
-                      ? "bg-muted text-muted-foreground"
-                      : "bg-primary/10 text-primary"
-                  }`}>
-                    {item.badge}
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground flex-1">{item.desc}</p>
-                {item.comingSoon ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground mt-5">
-                    {item.cta}
-                  </span>
-                ) : (
-                  <Link to={item.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary mt-5 hover:gap-2.5 transition-all">
-                    {item.cta} <ArrowRight size={14} />
-                  </Link>
+                {isEditMode && (
+                  <button 
+                    onClick={(e) => removeItem(e, i)}
+                    className="absolute top-4 right-4 p-2 rounded-xl bg-rose-500/10 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500 hover:text-white z-20"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 )}
+
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider mb-6">
+                  <EditableText section="suite" fieldKey={`item_badge_${i}`} defaultValue={item.badge} />
+                </div>
+                
+                <div className="w-16 h-16 rounded-[24px] bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-500 shadow-xl shadow-primary/5">
+                  <Icon size={32} />
+                </div>
+
+                <h3 className="text-xl font-bold text-foreground mb-3 uppercase tracking-tight">
+                  <EditableText section="suite" fieldKey={`item_title_${i}`} defaultValue={item.title} />
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-8 flex-1">
+                  <EditableText section="suite" fieldKey={`item_desc_${i}`} defaultValue={item.desc} multiline />
+                </p>
+
+                <EditableButton 
+                  section="suite" 
+                  fieldKey={`item_cta_${i}`} 
+                  defaultLabel={item.cta} 
+                  defaultHref={overrides[`item_cta_${i}_href`] || "#"}
+                  className="w-full btn-outline inline-flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300 py-3"
+                />
               </motion.div>
             );
           })}
+
+          {isEditMode && (
+            <button 
+              onClick={addItem}
+              className="p-8 rounded-[32px] border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all group min-h-[400px]"
+            >
+              <Plus size={32} />
+              <span className="font-black uppercase text-xs tracking-widest">Add Product</span>
+            </button>
+          )}
         </div>
       </div>
     </section>

@@ -6,10 +6,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatMoney, monthKey, type PPMonthlySummary, type PPTransaction } from "@/lib/profitPlanner";
+import { useTranslation } from "react-i18next";
 
 const PALETTE = ["#3b82f6", "#f97316", "#10b981", "#ec4899", "#8b5cf6", "#06b6d4", "#eab308", "#ef4444"];
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [month, setMonth] = useState(monthKey(new Date()));
   const [summary, setSummary] = useState<PPMonthlySummary | null>(null);
@@ -45,10 +47,10 @@ const Dashboard = () => {
   const rate = Number(summary?.savings_rate ?? 0);
 
   const cards = [
-    { label: "Income", value: formatMoney(income), icon: ArrowUpRight, tone: "text-emerald-600 dark:text-emerald-400" },
-    { label: "Expense", value: formatMoney(expense), icon: ArrowDownRight, tone: "text-rose-600 dark:text-rose-400" },
-    { label: "Net", value: formatMoney(net), icon: Wallet, tone: net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400" },
-    { label: "Savings Rate", value: `${(rate * 100).toFixed(1)}%`, icon: PiggyBank, tone: "text-primary" },
+    { label: t("app.dashboard.income"), value: formatMoney(income), icon: ArrowUpRight, tone: "text-emerald-600 dark:text-emerald-400" },
+    { label: t("app.dashboard.expense"), value: formatMoney(expense), icon: ArrowDownRight, tone: "text-rose-600 dark:text-rose-400" },
+    { label: t("app.dashboard.net"), value: formatMoney(net), icon: Wallet, tone: net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400" },
+    { label: t("app.dashboard.savingsRate"), value: `${(rate * 100).toFixed(1)}%`, icon: PiggyBank, tone: "text-primary" },
   ];
 
   const byCat = (summary?.by_category ?? []).map((c, i) => ({ ...c, total: Number(c.total), color: c.color || PALETTE[i % PALETTE.length] }));
@@ -58,8 +60,8 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-display font-bold">Monthly Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">Your money flow at a glance.</p>
+          <h1 className="text-2xl lg:text-3xl font-display font-bold">{t("app.dashboard.title")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("app.dashboard.description")}</p>
         </div>
         <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-auto" />
       </div>
@@ -78,9 +80,9 @@ const Dashboard = () => {
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-5">
-          <h3 className="font-semibold mb-3">Expense by Category</h3>
+          <h3 className="font-semibold mb-3">{t("app.dashboard.byCategory")}</h3>
           {byCat.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-12 text-center">No expenses this month.</p>
+            <p className="text-sm text-muted-foreground py-12 text-center">{t("app.dashboard.noExpenses")}</p>
           ) : (
             <div className="h-64">
               <ResponsiveContainer>
@@ -96,9 +98,9 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-5">
-          <h3 className="font-semibold mb-3">Daily Flow</h3>
+          <h3 className="font-semibold mb-3">{t("app.dashboard.dailyFlow")}</h3>
           {daily.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-12 text-center">No activity this month.</p>
+            <p className="text-sm text-muted-foreground py-12 text-center">{t("app.dashboard.noActivity")}</p>
           ) : (
             <div className="h-64">
               <ResponsiveContainer>
@@ -117,7 +119,7 @@ const Dashboard = () => {
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-5">
-          <h3 className="font-semibold mb-3">Top 5 Expense Categories</h3>
+          <h3 className="font-semibold mb-3">{t("app.dashboard.topCategories")}</h3>
           {byCat.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">—</p>
           ) : (
@@ -136,9 +138,9 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-5">
-          <h3 className="font-semibold mb-3">Recent Transactions</h3>
+          <h3 className="font-semibold mb-3">{t("app.dashboard.recentTransactions")}</h3>
           {recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">No recent transactions.</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">{t("app.dashboard.noTransactions")}</p>
           ) : (
             <div className="space-y-2">
               {recent.map((t) => (

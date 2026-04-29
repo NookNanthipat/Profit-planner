@@ -63,6 +63,8 @@ const formatActivity = (a: ActivityRow): string => {
   }
 };
 
+import SettingsMenu from "@/components/SettingsMenu";
+
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
@@ -90,8 +92,15 @@ const AdminDashboard = () => {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-display font-bold mb-1">Dashboard</h1>
-      <p className="text-muted-foreground mb-8">Overview of platform activity and growth.</p>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-display font-bold mb-1">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of platform activity and growth.</p>
+        </div>
+        <div className="bg-card/50 p-2 rounded-2xl border border-border/40 scale-90 origin-right">
+          <SettingsMenu />
+        </div>
+      </div>
 
       {metrics && (
         <>

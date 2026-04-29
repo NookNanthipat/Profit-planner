@@ -1,57 +1,76 @@
-import { motion } from "framer-motion";
-import { Mail } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Send, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
 
 const NewsletterSection = () => {
   const { t } = useTranslation();
+  const { ds } = useSiteContent("newsletter");
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) setSubscribed(true);
+  };
 
   return (
-    <section id="newsletter" className="section-padding">
-      <div className="max-w-4xl mx-auto">
+    <section className="section-padding py-24 bg-slate-900 text-white relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-4xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass-card p-10 md:p-12 text-center relative overflow-hidden"
+          className="space-y-6"
         >
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-          <div className="relative">
-            <div className="inline-flex w-14 h-14 rounded-2xl bg-primary/10 text-primary items-center justify-center mb-5">
-              <Mail size={24} />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              {t("newsletter.title")}
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-              {t("newsletter.description")}
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubmitted(true);
-                setEmail("");
-                setTimeout(() => setSubmitted(false), 3000);
-              }}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("newsletter.placeholder")}
-                maxLength={255}
-                className="flex-1 px-4 py-3 rounded-xl border border-border bg-background/60 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button type="submit" className="btn-primary py-3">
-                {submitted ? t("newsletter.success") : t("newsletter.subscribe")}
-              </button>
-            </form>
-            <p className="text-xs text-muted-foreground mt-4">{t("newsletter.privacy")}</p>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+             <EditableText section="newsletter" fieldKey="title" defaultValue={ds("title", "newsletter.title")} />
+          </h2>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+             <EditableText section="newsletter" fieldKey="description" defaultValue={ds("description", "newsletter.description")} multiline />
+          </p>
+
+          <div className="pt-6">
+            {subscribed ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-3 bg-emerald-500/20 text-emerald-400 px-8 py-4 rounded-2xl border border-emerald-500/30"
+              >
+                <CheckCircle2 size={24} />
+                <span className="font-bold">
+                   <EditableText section="newsletter" fieldKey="success" defaultValue={ds("success", "newsletter.success")} />
+                </span>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+                <input
+                  type="email"
+                  required
+                  placeholder={ds("placeholder", "newsletter.placeholder")}
+                  className="flex-1 bg-white/10 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary transition-all text-white placeholder:text-slate-500"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="btn-primary py-4 px-8 flex items-center justify-center gap-2 group"
+                >
+                  <EditableText section="newsletter" fieldKey="subscribe" defaultValue={ds("subscribe", "newsletter.subscribe")} />
+                  <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </button>
+              </form>
+            )}
           </div>
+          <p className="text-xs text-slate-500 pt-4">
+             <EditableText section="newsletter" fieldKey="privacy" defaultValue={ds("privacy", "newsletter.privacy")} />
+          </p>
         </motion.div>
       </div>
     </section>

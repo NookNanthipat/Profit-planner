@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./admin/EditableText";
+import { EditableButton } from "./admin/EditableButton";
 
 interface Plan {
   name: string;
@@ -14,7 +17,9 @@ interface Plan {
 
 const PricingSection = () => {
   const { t } = useTranslation();
-  const plans = t("pricing.plans", { returnObjects: true }) as Plan[];
+  const { ds, overrides } = useSiteContent("pricing");
+  const rawPlans = t("pricing.plans", { returnObjects: true });
+  const plans = Array.isArray(rawPlans) ? (rawPlans as Plan[]) : [];
 
   return (
     <section id="pricing" className="section-padding">
@@ -25,13 +30,19 @@ const PricingSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{t("pricing.label")}</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{t("pricing.title")}</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">{t("pricing.description")}</p>
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">
+            <EditableText section="pricing" fieldKey="label" defaultValue={ds("label", "pricing.label")} />
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <EditableText section="pricing" fieldKey="title" defaultValue={ds("title", "pricing.title")} />
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            <EditableText section="pricing" fieldKey="description" defaultValue={ds("description", "pricing.description")} multiline />
+          </p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6 items-start">
-          {plans.map((plan, i) => (
+          {plans.length > 0 ? plans.map((plan, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30 }}
@@ -48,34 +59,46 @@ const PricingSection = () => {
                 </div>
               )}
 
-              <h3 className="font-display font-bold text-xl text-foreground mb-1">{plan.name}</h3>
-              <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
+              <h3 className="font-display font-bold text-xl text-foreground mb-1">
+                 <EditableText section="pricing" fieldKey={`plan_${i}_name`} defaultValue={ds(`plan_${i}_name`, `pricing.plans.${i}.name`)} />
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                 <EditableText section="pricing" fieldKey={`plan_${i}_desc`} defaultValue={ds(`plan_${i}_desc`, `pricing.plans.${i}.description`)} multiline />
+              </p>
 
               <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                <span className="text-muted-foreground text-sm">{plan.period}</span>
+                <span className="text-4xl font-bold text-foreground">
+                   <EditableText section="pricing" fieldKey={`plan_${i}_price`} defaultValue={ds(`plan_${i}_price`, `pricing.plans.${i}.price`)} />
+                </span>
+                <span className="text-muted-foreground text-sm">
+                   <EditableText section="pricing" fieldKey={`plan_${i}_period`} defaultValue={ds(`plan_${i}_period`, `pricing.plans.${i}.period`)} />
+                </span>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((feature, fi) => (
+                {Array.isArray(plan.features) && plan.features.map((feature, fi) => (
                   <li key={fi} className="flex items-center gap-3 text-sm text-muted-foreground">
                     <Check size={16} className="text-primary flex-shrink-0" />
-                    {feature}
+                    <EditableText section="pricing" fieldKey={`plan_${i}_feat_${fi}`} defaultValue={ds(`plan_${i}_feat_${fi}`, `pricing.plans.${i}.features.${fi}`)} />
                   </li>
                 ))}
               </ul>
 
-              <button
-                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
+              <EditableButton 
+                section="pricing" 
+                fieldKey={`plan_${i}_cta`} 
+                defaultLabel={ds(`plan_${i}_cta`, `pricing.plans.${i}.cta`)} 
+                defaultHref={overrides[`plan_${i}_cta_href`] || "#"}
+                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center ${
                   plan.popular
-                    ? "btn-primary"
+                    ? "btn-primary shadow-lg shadow-primary/20"
                     : "border-2 border-border text-foreground hover:border-primary hover:text-primary"
                 }`}
-              >
-                {plan.cta}
-              </button>
+              />
             </motion.div>
-          ))}
+          )) : (
+            <div className="col-span-3 py-10 text-center text-muted-foreground italic">No pricing plans found.</div>
+          )}
         </div>
       </div>
     </section>
