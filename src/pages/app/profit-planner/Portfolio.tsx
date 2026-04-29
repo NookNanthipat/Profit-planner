@@ -673,7 +673,7 @@ const Portfolio = () => {
   return (
     <div className="space-y-6 pb-20 w-full max-w-6xl mx-auto overflow-x-hidden">
       <div className="flex items-center justify-between gap-4 flex-wrap animate-in fade-in duration-500">
-        <div className="min-w-0"><h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter text-white truncate">{t("app.portfolio.title")}</h1><p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1">Global Precision Management V2.2</p></div>
+        <div className="min-w-0"><h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter !text-slate-900 dark:!text-white truncate">{t("app.portfolio.title")}</h1><p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1">Global Precision Management V2.2</p></div>
         <div className="flex gap-2 flex-wrap">
           <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl h-11 px-4 border-none flex items-center gap-2 whitespace-nowrap">
             <span className="text-[8px] font-black uppercase opacity-40">Rate</span>

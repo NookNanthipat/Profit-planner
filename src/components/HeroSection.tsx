@@ -41,13 +41,39 @@ const HeroSection = () => {
       const { data: product } = await supabase.from("products").select("id").eq("slug", "profit-planner").single();
       if (!product) throw new Error("Product not found");
 
-      // Grant trial access (for free version)
-      const { error } = await supabase.from("user_products").upsert({
+      // Use RPC for the most accurate entitlement check (matches the dashboard logic)
+      const { data: hasAccess } = await supabase.rpc("user_has_product_access", {
+        _user_id: user.id,
+        _product_slug: "profit-planner",
+      });
+
+      if (hasAccess) {
+        toast({ title: t("nav.welcome"), description: "You already have active access. Redirecting..." });
+        window.location.href = "/app/profit-planner/dashboard";
+        return;
+      }
+
+      // Check if they have an EXPIRED trial (already exists in DB but expired)
+      const { data: existing } = await supabase.from("user_products")
+        .select("status, expired_at")
+        .eq("user_id", user.id)
+        .eq("product_id", product.id)
+        .maybeSingle();
+
+      if (existing) {
+        toast({ title: "Upgrade Required", description: "Your trial has expired. Please upgrade to Pro." });
+        window.location.href = "/portal";
+        return;
+      }
+
+      // ONLY grant trial access if user has NO record for this product
+      const { error } = await supabase.from("user_products").insert({
         user_id: user.id,
         product_id: product.id,
         status: "trial",
-        purchased_at: new Date().toISOString()
-      }, { onConflict: 'user_id,product_id' });
+        purchased_at: new Date().toISOString(),
+        expired_at: new Date(Date.now() + 7 * 86400000).toISOString() // 7 days
+      });
 
       if (error) throw error;
       toast({ title: "Free Access Granted", description: "You can now use the dashboard and transactions!" });

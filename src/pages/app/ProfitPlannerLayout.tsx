@@ -11,6 +11,7 @@ import logo from "@/assets/profitplanner-logo.png";
 import SettingsMenu from "@/components/SettingsMenu";
 import { PaywallOverlay } from "@/components/profit-planner/PaywallOverlay";
 import { useTranslation } from "react-i18next";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +25,7 @@ const FREE_ROUTES = ["/app/profit-planner/dashboard", "/app/profit-planner/trans
 const ProfitPlannerLayout = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  useIdleTimeout(); // 15-minute auto-logout
   const location = useLocation();
   const [checking, setChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);

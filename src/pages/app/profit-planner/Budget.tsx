@@ -407,7 +407,7 @@ const Budget = () => {
     <div className="space-y-8 pb-20">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter text-white">{t("app.budget.title")}</h1>
+          <h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter !text-slate-900 dark:!text-white">{t("app.budget.title")}</h1>
           <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1">
             {t("app.budget.subtitle")}
           </p>

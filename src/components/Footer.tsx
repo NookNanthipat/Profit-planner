@@ -60,13 +60,13 @@ const Footer = () => {
              <EditableText section="footer" fieldKey="rights" defaultValue={ds("rights", "footer.rights").replace("{{year}}", new Date().getFullYear().toString())} />
           </p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+            <Link to="/privacy" className="hover:text-primary transition-colors tracking-tight">
                <EditableText section="footer" fieldKey="privacy" defaultValue={ds("privacy", "footer.privacy")} />
-            </a>
-            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+            </Link>
+            <Link to="/tos" className="hover:text-primary transition-colors tracking-tight">
                <EditableText section="footer" fieldKey="terms" defaultValue={ds("terms", "footer.terms")} />
-            </a>
-            <a href="#" className="hover:text-primary transition-colors tracking-tight">
+            </Link>
+            <a href="mailto:support@profitplanner.app" className="hover:text-primary transition-colors tracking-tight">
                <EditableText section="footer" fieldKey="contact" defaultValue={ds("contact", "footer.contact")} />
             </a>
           </div>

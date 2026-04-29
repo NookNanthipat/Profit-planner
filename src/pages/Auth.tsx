@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/profitplanner-logo.png";
 
@@ -28,6 +29,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const isTh = i18n.language === "th";
 
@@ -39,6 +41,14 @@ const Auth = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !acceptedTerms) {
+      toast({
+        title: isTh ? "ต้องยอมรับข้อตกลง" : "Terms acceptance required",
+        description: isTh ? "กรุณายอมรับนโยบายความเป็นส่วนตัวและข้อตกลงการใช้งาน" : "Please accept our Privacy Policy and Terms of Service.",
+        variant: "destructive"
+      });
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -144,6 +154,26 @@ const Auth = () => {
               </div>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
             </div>
+
+            {mode === "signup" && (
+              <div className="flex items-start space-x-3 pt-2">
+                <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(v) => setAcceptedTerms(!!v)} className="mt-1" />
+                <Label htmlFor="terms" className="text-xs leading-relaxed text-muted-foreground font-medium">
+                  {isTh ? (
+                    <>
+                      ฉันยอมรับ <Link to="/tos" className="text-primary hover:underline">ข้อตกลงการใช้งาน</Link> และ{" "}
+                      <Link to="/privacy" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</Link> ของ ProfitPlanner
+                    </>
+                  ) : (
+                    <>
+                      I agree to the <Link to="/tos" className="text-primary hover:underline">Terms of Service</Link> and{" "}
+                      <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> of ProfitPlanner.
+                    </>
+                  )}
+                </Label>
+              </div>
+            )}
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : mode === "signin" ? (isTh ? "เข้าสู่ระบบ" : "Sign in") : isTh ? "สมัครสมาชิก" : "Create account"}
             </Button>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Settings, Shield } from "lucide-react";
+import { LogOut, Settings, Shield, Trash2, AlertTriangle } from "lucide-react";
 import { supabase, type Product, type UserProduct } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import SettingsMenu from "@/components/SettingsMenu";
 import ProductCard from "@/components/portal/ProductCard";
 
@@ -18,9 +19,31 @@ type EntitlementMap = Record<string, UserProduct>;
 
 const PortalPage = () => {
   const { user, signOut, isAdmin } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { ds } = useSiteContent("portal");
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+
+  const handleDeleteAccount = async () => {
+    const confirmMsg = i18n.language === "th" 
+      ? "คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีและข้อมูลทั้งหมด? การดำเนินการนี้ไม่สามารถย้อนกลับได้" 
+      : "Are you sure you want to delete your account and all associated data? This action is irreversible.";
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const { error } = await supabase.rpc('delete_user_data_and_account');
+      if (error) throw error;
+
+      await signOut();
+      toast({
+        title: i18n.language === "th" ? "ลบบัญชีสำเร็จ" : "Account Deleted",
+        description: i18n.language === "th" ? "ข้อมูลของคุณถูกลบออกจากระบบแล้ว" : "Your account and data have been permanently removed.",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
   const [entitlements, setEntitlements] = useState<EntitlementMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +190,35 @@ const PortalPage = () => {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mt-20 pt-10 border-t border-border/40">
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-bold text-rose-500 uppercase tracking-tight flex items-center gap-2 mb-4">
+              <AlertTriangle size={18} />
+              {i18n.language === "th" ? "เขตอันตราย" : "Danger Zone"}
+            </h2>
+            <Card className="p-6 border-rose-500/20 bg-rose-500/[0.02] rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="font-bold text-foreground">
+                  {i18n.language === "th" ? "ลบบัญชีผู้ใช้" : "Delete Account"}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  {i18n.language === "th" 
+                    ? "การดำเนินการนี้จะลบข้อมูลทางการเงินและบัญชีของคุณอย่างถาวร ไม่สามารถย้อนคืนได้" 
+                    : "Permanently remove all your financial data and account access. This action cannot be undone."}
+                </p>
+              </div>
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteAccount}
+                className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-rose-500/20 shrink-0"
+              >
+                <Trash2 size={16} className="mr-2" />
+                {i18n.language === "th" ? "ยืนยันลบบัญชี" : "Delete Account"}
+              </Button>
+            </Card>
+          </div>
         </section>
       </main>
     </div>

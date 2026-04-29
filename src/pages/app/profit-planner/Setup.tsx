@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, Pencil, Plus, Trash2, User as UserIcon, Sparkles } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Trash2, User as UserIcon, Sparkles, AlertTriangle, RefreshCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -439,7 +439,7 @@ function PersonAvatar({ person, onUpload, size = "md" }: { person: PPPerson; onU
 
 // ─── Main Setup Page ──────────────────────────────────────────────────────────
 const Setup = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [accounts, setAccounts]     = useState<PPAccount[]>([]);
@@ -498,6 +498,27 @@ const Setup = () => {
     const { error } = await supabase.from("pp_people").delete().eq("id", id);
     if (error) toast({ title: t("app.common.error"), description: error.message, variant: "destructive" });
     else { toast({ title: t("app.common.success") }); load(); }
+  };
+
+  const handleResetData = async () => {
+    const confirmMsg = i18n.language === "th" 
+      ? "คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทางการเงินทั้งหมด? การดำเนินการนี้ไม่สามารถย้อนกลับได้ (บัญชีผู้ใช้ของคุณจะยังอยู่)" 
+      : "Are you sure you want to clear all your financial data? This will delete all transactions, assets, and budgets. Your account will remain active.";
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const { error } = await supabase.rpc('reset_user_financial_data');
+      if (error) throw error;
+
+      toast({
+        title: i18n.language === "th" ? "ล้างข้อมูลสำเร็จ" : "Data Reset Successful",
+        description: i18n.language === "th" ? "ข้อมูลทางการเงินของคุณถูกลบแล้ว" : "All your financial records have been cleared.",
+      });
+      load();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleAddSub = (parent: PPCategory) => { setPresetParent(parent); setEditCat(null); setCatFormOpen(true); };
@@ -583,6 +604,35 @@ const Setup = () => {
       <AccountFormDialog open={accFormOpen} onOpenChange={setAccFormOpen} account={editAcc} onSaved={load} />
       <CategoryFormDialog open={catFormOpen} onOpenChange={v => { setCatFormOpen(v); if (!v) setPresetParent(null); }} category={editCat} presetParentId={presetParent?.id} parentOptions={topLevelCats} onSaved={load} />
       <PersonFormDialog open={personFormOpen} onOpenChange={setPersonFormOpen} person={editPerson} onSaved={load} />
+
+      <section className="mt-20 pt-10 border-t border-border/40">
+        <div className="max-w-2xl">
+          <h2 className="text-lg font-bold text-rose-500 uppercase tracking-tight flex items-center gap-2 mb-4">
+            <AlertTriangle size={18} />
+            {i18n.language === "th" ? "เขตอันตราย" : "Danger Zone"}
+          </h2>
+          <Card className="p-6 border-rose-500/20 bg-rose-500/[0.02] rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="font-bold text-foreground">
+                {i18n.language === "th" ? "ล้างข้อมูลแอป" : "Reset App Data"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                {i18n.language === "th" 
+                  ? "ลบข้อมูลธุรกรรม สินทรัพย์ และงบประมาณทั้งหมดของคุณ บัญชีผู้ใช้จะยังคงอยู่" 
+                  : "Delete all your transactions, assets, and budgets. Your account will remain active."}
+              </p>
+            </div>
+            <Button 
+              variant="destructive" 
+              onClick={handleResetData}
+              className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-rose-500/20 shrink-0"
+            >
+              <RefreshCcw size={16} className="mr-2" />
+              {i18n.language === "th" ? "ล้างข้อมูลทั้งหมด" : "Clear All Data"}
+            </Button>
+          </Card>
+        </div>
+      </section>
     </div>
   );
 };

@@ -183,7 +183,12 @@
       { "title": "Resources", "links": ["Help Center", "Guides", "API Docs", "Community", "Status"] }
     ]
   },
+  "settings": {
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account & Data"
+  },
   "trust": {
+
     "title": "Trusted by professionals worldwide",
     "items": [
       "256-bit SSL Encryption",

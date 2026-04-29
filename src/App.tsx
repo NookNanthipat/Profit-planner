@@ -33,6 +33,9 @@ import ProfitPlannerDebt from "./pages/app/profit-planner/DebtManagement.tsx";
 import ProfitPlannerSplit from "./pages/app/profit-planner/SplitPayment.tsx";
 import ProfitPlannerPortfolio from "./pages/app/profit-planner/Portfolio.tsx";
 import ProfitPlannerSimulator from "./pages/app/profit-planner/Simulator.tsx";
+import TermsOfService from "./pages/TermsOfService.tsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
+import CookieConsent from "./components/CookieConsent.tsx";
 
 const queryClient = new QueryClient();
 
@@ -43,12 +46,15 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <CookieConsent />
             <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Auth />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/tos" element={<TermsOfService />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />

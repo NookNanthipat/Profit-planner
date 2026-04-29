@@ -1,6 +1,7 @@
 import { Sun, Moon, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,14 +45,14 @@ const SettingsMenu = () => {
             <Globe size={18} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[140px]">
-          <DropdownMenuLabel className="text-xs">Language</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" className="min-w-[140px] rounded-2xl p-2 shadow-2xl border-border/40">
+          <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-40 px-2 py-1.5">Language</DropdownMenuLabel>
+          <DropdownMenuSeparator className="my-1 opacity-50" />
           {languages.map((lang) => (
             <DropdownMenuItem
               key={lang.code}
               onClick={() => changeLang(lang.code)}
-              className={i18n.language === lang.code ? "bg-secondary font-semibold" : ""}
+              className={cn("rounded-xl px-2 py-2 font-bold text-xs cursor-pointer", i18n.language === lang.code ? "bg-primary/5 text-primary" : "")}
             >
               <span className="mr-2">{lang.flag}</span>
               {lang.label}
