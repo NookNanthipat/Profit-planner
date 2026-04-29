@@ -1,3 +1,2 @@
-# Welcome to your Lovable project
+# Welcome to your personal financial web app project
 
-TODO: Document your project here
