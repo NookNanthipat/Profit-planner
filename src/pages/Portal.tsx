@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Settings, Shield, Trash2, AlertTriangle } from "lucide-react";
+import { LogOut, Settings, Shield, Trash2, AlertTriangle, Download } from "lucide-react";
 import { supabase, type Product, type UserProduct } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import SettingsMenu from "@/components/SettingsMenu";
 import ProductCard from "@/components/portal/ProductCard";
 
@@ -25,16 +26,10 @@ const PortalPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   const handleDeleteAccount = async () => {
-    const confirmMsg = i18n.language === "th" 
-      ? "คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีและข้อมูลทั้งหมด? การดำเนินการนี้ไม่สามารถย้อนกลับได้" 
-      : "Are you sure you want to delete your account and all associated data? This action is irreversible.";
-    
-    if (!window.confirm(confirmMsg)) return;
-
     try {
       const { error } = await supabase.rpc('delete_user_data_and_account');
       if (error) throw error;
-
+      setShowDeleteDialog(false);
       await signOut();
       toast({
         title: i18n.language === "th" ? "ลบบัญชีสำเร็จ" : "Account Deleted",
@@ -44,9 +39,60 @@ const PortalPage = () => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
   };
+  const handleExportData = async () => {
+    setExportLoading(true);
+    try {
+      const tables = [
+        "pp_accounts", "pp_categories", "pp_transactions", "pp_recurring",
+        "pp_budgets", "pp_debts", "pp_assets", "pp_asset_lots",
+        "pp_simulations", "pp_people", "pp_splits",
+      ] as const;
+
+      const results = await Promise.all(
+        tables.map((t) => supabase.from(t).select("*"))
+      );
+
+      const data: Record<string, unknown[]> = {};
+      tables.forEach((t, i) => {
+        data[t] = results[i].data ?? [];
+      });
+
+      const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle();
+      const { data: consent } = await supabase.from("consent_records").select("policy_version, accepted_tos, accepted_privacy, accepted_marketing, consented_at");
+
+      const exportPayload = {
+        exported_at: new Date().toISOString(),
+        user_id: user!.id,
+        email: user!.email,
+        profile,
+        consent_records: consent ?? [],
+        financial_data: data,
+      };
+
+      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `profitplanner-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: i18n.language === "th" ? "Export สำเร็จ" : "Export complete",
+        description: i18n.language === "th" ? "ดาวน์โหลดข้อมูลของคุณแล้ว" : "Your data has been downloaded.",
+      });
+    } catch (err: any) {
+      toast({ title: "Export failed", description: err.message, variant: "destructive" });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const [entitlements, setEntitlements] = useState<EntitlementMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -193,7 +239,38 @@ const PortalPage = () => {
         </section>
 
         <section className="mt-20 pt-10 border-t border-border/40">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl space-y-6">
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-tight flex items-center gap-2 mb-4">
+                <Download size={18} />
+                {i18n.language === "th" ? "ข้อมูลของฉัน (PDPA)" : "My Data (PDPA)"}
+              </h2>
+              <Card className="p-6 border-border/40 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="font-bold text-foreground">
+                    {i18n.language === "th" ? "Export ข้อมูลของฉัน" : "Export My Data"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    {i18n.language === "th"
+                      ? "ดาวน์โหลดข้อมูลทั้งหมดของคุณในรูปแบบ JSON ตามสิทธิ์ภายใต้ PDPA (Right to Portability)"
+                      : "Download all your data as JSON — your right under PDPA (Right to Portability)."}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleExportData}
+                  disabled={exportLoading}
+                  className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest shrink-0"
+                >
+                  <Download size={16} className="mr-2" />
+                  {exportLoading
+                    ? (i18n.language === "th" ? "กำลัง Export..." : "Exporting...")
+                    : (i18n.language === "th" ? "Export ข้อมูล" : "Export Data")}
+                </Button>
+              </Card>
+            </div>
+
+            <div>
             <h2 className="text-lg font-bold text-rose-500 uppercase tracking-tight flex items-center gap-2 mb-4">
               <AlertTriangle size={18} />
               {i18n.language === "th" ? "เขตอันตราย" : "Danger Zone"}
@@ -209,18 +286,49 @@ const PortalPage = () => {
                     : "Permanently remove all your financial data and account access. This action cannot be undone."}
                 </p>
               </div>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteAccount}
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
                 className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-rose-500/20 shrink-0"
               >
                 <Trash2 size={16} className="mr-2" />
-                {i18n.language === "th" ? "ยืนยันลบบัญชี" : "Delete Account"}
+                {i18n.language === "th" ? "ลบบัญชี" : "Delete Account"}
               </Button>
             </Card>
+            </div>
           </div>
         </section>
       </main>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md rounded-[32px]">
+          <DialogHeader>
+            <DialogTitle className="text-rose-500 flex items-center gap-2">
+              <AlertTriangle size={18} />
+              {i18n.language === "th" ? "ยืนยันการลบบัญชี" : "Confirm Account Deletion"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3 text-sm text-muted-foreground">
+            <p>
+              {i18n.language === "th"
+                ? "การดำเนินการนี้จะลบข้อมูลทั้งหมดของคุณอย่างถาวร ได้แก่ รายการธุรกรรม บัญชี พอร์ต งบประมาณ และข้อมูลบัญชีผู้ใช้"
+                : "This will permanently delete all your data including transactions, accounts, portfolio, budgets, and your user account."}
+            </p>
+            <p className="font-bold text-foreground">
+              {i18n.language === "th" ? "การดำเนินการนี้ไม่สามารถย้อนกลับได้" : "This action cannot be undone."}
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="rounded-xl">
+              {i18n.language === "th" ? "ยกเลิก" : "Cancel"}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAccount} className="rounded-xl">
+              <Trash2 size={14} className="mr-2" />
+              {i18n.language === "th" ? "ลบบัญชีถาวร" : "Delete Permanently"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -66,6 +66,9 @@ const Footer = () => {
             <Link to="/tos" className="hover:text-primary transition-colors tracking-tight">
                <EditableText section="footer" fieldKey="terms" defaultValue={ds("terms", "footer.terms")} />
             </Link>
+            <Link to="/refund" className="hover:text-primary transition-colors tracking-tight">
+               <EditableText section="footer" fieldKey="refund" defaultValue={ds("refund", "Refund Policy")} />
+            </Link>
             <a href="mailto:support@profitplanner.app" className="hover:text-primary transition-colors tracking-tight">
                <EditableText section="footer" fieldKey="contact" defaultValue={ds("contact", "footer.contact")} />
             </a>

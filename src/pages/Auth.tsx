@@ -29,7 +29,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTos, setAcceptedTos] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
   const isTh = i18n.language === "th";
 
@@ -41,11 +43,13 @@ const Auth = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "signup" && !acceptedTerms) {
+    if (mode === "signup" && (!acceptedTos || !acceptedPrivacy)) {
       toast({
         title: isTh ? "ต้องยอมรับข้อตกลง" : "Terms acceptance required",
-        description: isTh ? "กรุณายอมรับนโยบายความเป็นส่วนตัวและข้อตกลงการใช้งาน" : "Please accept our Privacy Policy and Terms of Service.",
-        variant: "destructive"
+        description: isTh
+          ? "กรุณายอมรับทั้งข้อตกลงการใช้งาน และนโยบายความเป็นส่วนตัว"
+          : "Please accept both the Terms of Service and Privacy Policy.",
+        variant: "destructive",
       });
       return;
     }
@@ -57,7 +61,15 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/portal`,
-            data: { display_name: displayName },
+            data: {
+              display_name: displayName,
+              // PDPA consent — บันทึกผ่าน handle_new_user trigger
+              consent_tos:        acceptedTos,
+              consent_privacy:    acceptedPrivacy,
+              consent_marketing:  acceptedMarketing,
+              consent_version:    "1.0",
+              consent_user_agent: navigator.userAgent,
+            },
           },
         });
         if (error) throw error;
@@ -152,25 +164,65 @@ const Auth = () => {
                   </Link>
                 )}
               </div>
-              <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
+              <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
             </div>
 
             {mode === "signup" && (
-              <div className="flex items-start space-x-3 pt-2">
-                <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(v) => setAcceptedTerms(!!v)} className="mt-1" />
-                <Label htmlFor="terms" className="text-xs leading-relaxed text-muted-foreground font-medium">
-                  {isTh ? (
-                    <>
-                      ฉันยอมรับ <Link to="/tos" className="text-primary hover:underline">ข้อตกลงการใช้งาน</Link> และ{" "}
-                      <Link to="/privacy" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</Link> ของ ProfitPlanner
-                    </>
-                  ) : (
-                    <>
-                      I agree to the <Link to="/tos" className="text-primary hover:underline">Terms of Service</Link> and{" "}
-                      <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> of ProfitPlanner.
-                    </>
-                  )}
-                </Label>
+              <div className="space-y-3 pt-2">
+                {/* Required: Terms of Service */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="tos"
+                    checked={acceptedTos}
+                    onCheckedChange={(v) => setAcceptedTos(!!v)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="tos" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                    <span className="text-destructive font-bold mr-1">*</span>
+                    {isTh ? (
+                      <>ฉันได้อ่านและยอมรับ <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ข้อตกลงการใช้งาน</a> ของ ProfitPlanner</>
+                    ) : (
+                      <>I have read and agree to the <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms of Service</a> of ProfitPlanner.</>
+                    )}
+                  </Label>
+                </div>
+
+                {/* Required: Privacy Policy */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="privacy"
+                    checked={acceptedPrivacy}
+                    onCheckedChange={(v) => setAcceptedPrivacy(!!v)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="privacy" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                    <span className="text-destructive font-bold mr-1">*</span>
+                    {isTh ? (
+                      <>ฉันได้อ่านและยอมรับ <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้เก็บรวบรวมข้อมูลส่วนบุคคลเพื่อให้บริการ ProfitPlanner</>
+                    ) : (
+                      <>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</a>, and consent to the collection of my personal data to provide the ProfitPlanner service.</>
+                    )}
+                  </Label>
+                </div>
+
+                {/* Optional: Marketing */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="marketing"
+                    checked={acceptedMarketing}
+                    onCheckedChange={(v) => setAcceptedMarketing(!!v)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="marketing" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                    {isTh
+                      ? "ฉันยินยอมรับข่าวสาร อัปเดต และโปรโมชั่นจาก ProfitPlanner ทางอีเมล (ไม่บังคับ)"
+                      : "I agree to receive news, updates, and promotions from ProfitPlanner by email. (Optional)"}
+                  </Label>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground/60">
+                  {isTh ? "* จำเป็นต้องยอมรับ" : "* Required to proceed"}
+                </p>
               </div>
             )}
 

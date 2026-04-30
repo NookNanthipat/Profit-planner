@@ -120,7 +120,7 @@ async function fetchAssetMarketData(symbol: string, type: AssetType, addLog: (m:
 
     if (!result) {
        addLog("Step 4: Attempting Emergency Fallback (Finnhub)...");
-       const tokens = ["c8v7lka23idfeqf1u9v0", "sandbox_c8v7lka23idfeqf1u9v0"];
+       const tokens = [import.meta.env.VITE_FINNHUB_TOKEN as string, "sandbox_c8v7lka23idfeqf1u9v0"].filter(Boolean);
        for (const token of tokens) {
          try {
            const fRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanSym}&token=${token}`);
@@ -404,9 +404,10 @@ function LotManagerModal({ open, onOpenChange, asset, onSaved }: { open: boolean
 // ─── Main Module ─────────────────────────────────────────────────────────────
 
 const Portfolio = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth(); const { toast } = useToast();
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
+  const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
   const [assets, setAssets] = useState<any[]>([]); 
   const [history, setHistory] = useState<any[]>([]);
   const [search, setSearch] = useState(""); 
@@ -672,6 +673,23 @@ const Portfolio = () => {
 
   return (
     <div className="space-y-6 pb-20 w-full max-w-6xl mx-auto overflow-x-hidden">
+      {!disclaimerDismissed && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm">
+          <AlertCircle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="flex-1 text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">{i18n.language === "th" ? "ไม่ใช่คำแนะนำการลงทุน" : "Not financial advice."}</strong>
+            {" "}
+            {i18n.language === "th"
+              ? "ข้อมูลพอร์ตนี้มีไว้เพื่อการติดตามและการศึกษาเท่านั้น ProfitPlanner ไม่ใช่ที่ปรึกษาทางการเงินที่ได้รับใบอนุญาต ราคาตลาดอาจมีความล่าช้า"
+              : "Portfolio data is for tracking and educational purposes only. ProfitPlanner is not a licensed financial advisor. Market prices may be delayed."}
+          </p>
+          <button
+            onClick={() => setDisclaimerDismissed(true)}
+            className="text-muted-foreground hover:text-foreground shrink-0 text-lg leading-none"
+            aria-label="Dismiss"
+          >×</button>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-4 flex-wrap animate-in fade-in duration-500">
         <div className="min-w-0"><h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter !text-slate-900 dark:!text-white truncate">{t("app.portfolio.title")}</h1><p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1">Global Precision Management V2.2</p></div>
         <div className="flex gap-2 flex-wrap">

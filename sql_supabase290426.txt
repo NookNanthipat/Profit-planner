@@ -1,0 +1,279 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.activity_log (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  actor_id uuid,
+  type USER-DEFINED NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT activity_log_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT activity_log_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.pp_accounts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type USER-DEFINED NOT NULL DEFAULT 'bank'::pp_account_type,
+  currency text NOT NULL DEFAULT 'THB'::text,
+  opening_balance numeric NOT NULL DEFAULT 0,
+  archived boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_accounts_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.pp_asset_lots (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  qty numeric NOT NULL,
+  cost_per_unit numeric NOT NULL,
+  occurred_on date NOT NULL DEFAULT CURRENT_DATE,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_asset_lots_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_asset_lots_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_asset_lots_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.pp_assets(id)
+);
+CREATE TABLE public.pp_asset_price_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  price numeric NOT NULL,
+  recorded_at date NOT NULL DEFAULT CURRENT_DATE,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_asset_price_history_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_asset_price_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_asset_price_history_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.pp_assets(id)
+);
+CREATE TABLE public.pp_assets (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type text NOT NULL,
+  currency text NOT NULL DEFAULT 'THB'::text,
+  full_name text,
+  sector text,
+  current_price numeric DEFAULT 0,
+  last_price_updated_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  logo_url text,
+  data_source text,
+  sub_portfolio text DEFAULT 'Main Portfolio'::text,
+  CONSTRAINT pp_assets_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_assets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.pp_budgets (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  month text NOT NULL,
+  category_id uuid,
+  planned_amount numeric NOT NULL DEFAULT 0 CHECK (planned_amount >= 0::numeric),
+  currency text NOT NULL DEFAULT 'THB'::text,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_budgets_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_budgets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_budgets_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.pp_categories(id)
+);
+CREATE TABLE public.pp_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type USER-DEFINED NOT NULL,
+  icon text,
+  color text,
+  parent_id uuid,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_categories_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_categories_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.pp_categories(id)
+);
+CREATE TABLE public.pp_debts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['credit_card'::text, 'installment'::text, 'mortgage'::text, 'car'::text, 'personal'::text, 'other'::text])),
+  lender text,
+  total_amount numeric NOT NULL CHECK (total_amount > 0::numeric),
+  remaining_amount numeric NOT NULL CHECK (remaining_amount >= 0::numeric),
+  monthly_payment numeric NOT NULL CHECK (monthly_payment >= 0::numeric),
+  annual_rate numeric NOT NULL DEFAULT 0 CHECK (annual_rate >= 0::numeric),
+  start_date date NOT NULL,
+  due_day integer CHECK (due_day >= 1 AND due_day <= 31),
+  total_months integer,
+  paid_months integer NOT NULL DEFAULT 0,
+  note text,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  account_id uuid,
+  CONSTRAINT pp_debts_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_debts_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_debts_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.pp_accounts(id)
+);
+CREATE TABLE public.pp_market_cache (
+  symbol text NOT NULL,
+  price numeric NOT NULL,
+  name text,
+  logo_url text,
+  source text,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT pp_market_cache_pkey PRIMARY KEY (symbol)
+);
+CREATE TABLE public.pp_people (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  nickname text,
+  color text DEFAULT '#6366f1'::text,
+  avatar_url text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_people_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_people_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.pp_recurring (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['income'::text, 'expense'::text])),
+  category_id uuid,
+  account_id uuid,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  currency text NOT NULL DEFAULT 'THB'::text,
+  frequency text NOT NULL CHECK (frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'biweekly'::text, 'monthly'::text, 'quarterly'::text, 'biannual'::text, 'yearly'::text])),
+  start_date date NOT NULL,
+  end_date date,
+  next_due date,
+  note text,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_recurring_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_recurring_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_recurring_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.pp_categories(id),
+  CONSTRAINT pp_recurring_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.pp_accounts(id)
+);
+CREATE TABLE public.pp_simulations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  config jsonb NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_simulations_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_simulations_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.pp_site_content (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  section text NOT NULL,
+  key text NOT NULL,
+  value_en text,
+  value_th text,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT pp_site_content_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.pp_split_participants (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  split_id uuid NOT NULL,
+  person_id uuid,
+  mode USER-DEFINED NOT NULL DEFAULT 'amount'::pp_split_mode,
+  value numeric NOT NULL,
+  actual_amount numeric NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_split_participants_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_split_participants_split_id_fkey FOREIGN KEY (split_id) REFERENCES public.pp_splits(id),
+  CONSTRAINT pp_split_participants_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.pp_people(id)
+);
+CREATE TABLE public.pp_split_payments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  split_id uuid NOT NULL,
+  person_id uuid,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  paid_on date NOT NULL DEFAULT CURRENT_DATE,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_split_payments_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_split_payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_split_payments_split_id_fkey FOREIGN KEY (split_id) REFERENCES public.pp_splits(id),
+  CONSTRAINT pp_split_payments_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.pp_people(id)
+);
+CREATE TABLE public.pp_splits (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  transaction_id uuid NOT NULL UNIQUE,
+  due_date date,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT pp_splits_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_splits_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_splits_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.pp_transactions(id)
+);
+CREATE TABLE public.pp_transactions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  account_id uuid NOT NULL,
+  category_id uuid,
+  type USER-DEFINED NOT NULL,
+  amount numeric NOT NULL CHECK (amount >= 0::numeric),
+  occurred_on date NOT NULL DEFAULT CURRENT_DATE,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  debt_id uuid,
+  CONSTRAINT pp_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT pp_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT pp_transactions_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.pp_accounts(id),
+  CONSTRAINT pp_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.pp_categories(id),
+  CONSTRAINT pp_transactions_debt_id_fkey FOREIGN KEY (debt_id) REFERENCES public.pp_debts(id)
+);
+CREATE TABLE public.products (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  slug text NOT NULL UNIQUE,
+  name text NOT NULL,
+  description text,
+  price_cents integer NOT NULL DEFAULT 0,
+  currency text NOT NULL DEFAULT 'usd'::text,
+  is_active boolean NOT NULL DEFAULT true,
+  is_coming_soon boolean NOT NULL DEFAULT false,
+  app_route text,
+  badge text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  name_th text,
+  description_th text,
+  sort_order integer DEFAULT 0,
+  updated_at timestamp with time zone DEFAULT now(),
+  price_thb integer,
+  CONSTRAINT products_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  email text,
+  display_name text,
+  avatar_url text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.user_products (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  product_id uuid NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'active'::entitlement_status,
+  purchased_at timestamp with time zone NOT NULL DEFAULT now(),
+  expired_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_products_pkey PRIMARY KEY (id),
+  CONSTRAINT user_products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT user_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+);
+CREATE TABLE public.user_roles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role USER-DEFINED NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_roles_pkey PRIMARY KEY (id),
+  CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);

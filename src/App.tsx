@@ -35,6 +35,7 @@ import ProfitPlannerPortfolio from "./pages/app/profit-planner/Portfolio.tsx";
 import ProfitPlannerSimulator from "./pages/app/profit-planner/Simulator.tsx";
 import TermsOfService from "./pages/TermsOfService.tsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
+import RefundPolicy from "./pages/RefundPolicy.tsx";
 import CookieConsent from "./components/CookieConsent.tsx";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/tos" element={<TermsOfService />} />
+                <Route path="/refund" element={<RefundPolicy />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />

@@ -29,27 +29,22 @@ const Checkout = () => {
     });
   }, [slug]);
 
-  const grantAccess = async (status: "active" | "trial") => {
+  const grantAccess = async (mode: "demo" | "trial") => {
     if (!user || !product) return;
     setPurchasing(true);
     try {
-      const expired_at = status === "trial" ? new Date(Date.now() + 7 * 86400000).toISOString() : null;
-      const { error } = await supabase.from("user_products").upsert(
-        {
-          user_id: user.id,
-          product_id: product.id,
-          status,
-          purchased_at: new Date().toISOString(),
-          expired_at,
-        },
-        { onConflict: "user_id,product_id" }
-      );
-      if (error) throw error;
-      toast({
-        title: status === "trial" ? "Trial started" : "Purchase successful",
-        description: status === "trial" ? "Your 7-day trial is active." : "Welcome aboard!",
+      const { data, error } = await supabase.functions.invoke("grant-product-access", {
+        body: { productId: product.id, mode },
       });
-      navigate(product.app_route || "/portal");
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: mode === "trial" ? "Trial started" : "Purchase successful",
+        description: data?.message ?? (mode === "trial" ? "Your 7-day trial is active." : "Welcome aboard!"),
+      });
+      navigate(data?.redirectUrl ?? product.app_route ?? "/portal");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast({ title: "Error", description: message, variant: "destructive" });
@@ -110,7 +105,7 @@ const Checkout = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" className="flex-1" disabled={purchasing} onClick={() => grantAccess("active")}>
+              <Button size="lg" className="flex-1" disabled={purchasing} onClick={() => grantAccess("demo")}>
                 {purchasing ? <Loader2 className="animate-spin" /> : <>Buy Now (Simulate)</>}
               </Button>
               <Button size="lg" variant="outline" className="flex-1" disabled={purchasing} onClick={() => grantAccess("trial")}>

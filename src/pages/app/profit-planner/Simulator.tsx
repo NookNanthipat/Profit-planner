@@ -159,9 +159,10 @@ function AssetPanel({ asset, onChange, onRemove, canRemove }: { asset: any; onCh
 // ─── Main Module ─────────────────────────────────────────────────────────────
 
 const Simulator = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth(); const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
   const [plans, setPlans] = useState<any[]>([{ id: "p1", name: "Strategic Growth", icon: "📈", principal: 100000, annualRate: 10, additionalAmount: 10000, additionalFreq: "monthly", years: 20, annualIncreaseRate: 5, compoundFreq: "yearly", color: "#6366f1" }]);
   const [savedSims, setSavedSims] = useState<PPSimulation[]>([]);
   const [simName, setSimName] = useState("Wealth Forecast");
@@ -206,8 +207,27 @@ const Simulator = () => {
     } catch (e: any) { toast({ title: t("app.common.error"), description: e.message, variant: "destructive" }); } finally { setLoading(false); }
   };
 
+  const isTh = i18n.language === "th";
+
   return (
     <div className="space-y-6 pb-20">
+      {!disclaimerDismissed && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm">
+          <AlertTriangle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="flex-1 text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">{isTh ? "ไม่ใช่คำแนะนำการลงทุน" : "Not financial advice."}</strong>
+            {" "}
+            {isTh
+              ? "การจำลองนี้มีไว้เพื่อการศึกษาเท่านั้น ProfitPlanner ไม่ใช่ที่ปรึกษาทางการเงินที่ได้รับใบอนุญาต อย่าตัดสินใจลงทุนโดยอิงจากผลลัพธ์นี้เพียงอย่างเดียว"
+              : "Simulations are for educational purposes only. ProfitPlanner is not a licensed financial advisor. Do not base investment decisions solely on these results."}
+          </p>
+          <button
+            onClick={() => setDisclaimerDismissed(true)}
+            className="text-muted-foreground hover:text-foreground shrink-0 text-lg leading-none"
+            aria-label="Dismiss"
+          >×</button>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-500">
         <div><h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter">{t("app.simulator.title")}</h1><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 mt-1">{t("app.simulator.subtitle")}</p></div>
         <div className="flex flex-wrap gap-2">
