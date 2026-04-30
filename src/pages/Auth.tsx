@@ -276,68 +276,6 @@ const Auth = () => {
               <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
             </div>
 
-<<<<<<< HEAD
-            {mode === "signup" && (
-              <div className="space-y-3 pt-2">
-                {/* Required: Terms of Service */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="tos"
-                    checked={acceptedTos}
-                    onCheckedChange={(v) => setAcceptedTos(!!v)}
-                    className="mt-0.5"
-                  />
-                  <Label htmlFor="tos" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                    <span className="text-destructive font-bold mr-1">*</span>
-                    {isTh ? (
-                      <>ฉันได้อ่านและยอมรับ <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ข้อตกลงการใช้งาน</a> ของ ProfitPlanner</>
-                    ) : (
-                      <>I have read and agree to the <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms of Service</a> of ProfitPlanner.</>
-                    )}
-                  </Label>
-                </div>
-
-                {/* Required: Privacy Policy */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="privacy"
-                    checked={acceptedPrivacy}
-                    onCheckedChange={(v) => setAcceptedPrivacy(!!v)}
-                    className="mt-0.5"
-                  />
-                  <Label htmlFor="privacy" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                    <span className="text-destructive font-bold mr-1">*</span>
-                    {isTh ? (
-                      <>ฉันได้อ่านและยอมรับ <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้เก็บรวบรวมข้อมูลส่วนบุคคลเพื่อให้บริการ ProfitPlanner</>
-                    ) : (
-                      <>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</a>, and consent to the collection of my personal data to provide the ProfitPlanner service.</>
-                    )}
-                  </Label>
-                </div>
-
-                {/* Optional: Marketing */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="marketing"
-                    checked={acceptedMarketing}
-                    onCheckedChange={(v) => setAcceptedMarketing(!!v)}
-                    className="mt-0.5"
-                  />
-                  <Label htmlFor="marketing" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                    {isTh
-                      ? "ฉันยินยอมรับข่าวสาร อัปเดต และโปรโมชั่นจาก ProfitPlanner ทางอีเมล (ไม่บังคับ)"
-                      : "I agree to receive news, updates, and promotions from ProfitPlanner by email. (Optional)"}
-                  </Label>
-                </div>
-
-                <p className="text-[10px] text-muted-foreground/60">
-                  {isTh ? "* จำเป็นต้องยอมรับ" : "* Required to proceed"}
-                </p>
-              </div>
-            )}
-
-=======
->>>>>>> a2a1ac5 (feat: PDPA compliance, legal pages, Google consent flow, Netlify config)
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : mode === "signin" ? (isTh ? "เข้าสู่ระบบ" : "Sign in") : isTh ? "สมัครสมาชิก" : "Create account"}
             </Button>
