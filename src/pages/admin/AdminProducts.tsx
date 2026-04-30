@@ -18,9 +18,8 @@ const emptyForm = {
   name_th: "",
   description: "",
   description_th: "",
-  price_cents: 0,
-  price_thb: null as number | null,
-  currency: "usd",
+  price_amount: 0,
+  currency: "thb",
   app_route: "",
   badge: "",
   status: "live" as ProductStatus,
@@ -60,8 +59,7 @@ const AdminProducts = () => {
       name_th: p.name_th || "",
       description: p.description || "",
       description_th: p.description_th || "",
-      price_cents: p.price_cents,
-      price_thb: p.price_thb,
+      price_amount: p.price_amount,
       currency: p.currency,
       app_route: p.app_route || "",
       badge: p.badge || "",
@@ -80,8 +78,7 @@ const AdminProducts = () => {
         name_th: form.name_th || null,
         description: form.description || null,
         description_th: form.description_th || null,
-        price_cents: form.price_cents,
-        price_thb: form.price_thb,
+        price_amount: form.price_amount,
         currency: form.currency,
         app_route: form.app_route || null,
         badge: form.badge || null,
@@ -165,12 +162,8 @@ const AdminProducts = () => {
             <Textarea value={form.description_th} onChange={(e) => setForm({ ...form, description_th: e.target.value })} placeholder="รายละเอียดสินค้าภาษาไทย" className="rounded-xl bg-muted/20 border-none min-h-[100px] p-4 font-thai" />
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest opacity-60">Base Price (USD Cents)</Label>
-            <Input type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: parseInt(e.target.value) })} className="h-11 rounded-xl bg-muted/20 border-none px-4" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest opacity-60">Fixed Thai Price (THB)</Label>
-            <Input type="number" value={form.price_thb || ""} onChange={(e) => setForm({ ...form, price_thb: e.target.value ? parseInt(e.target.value) : null })} placeholder="e.g. 199" className="h-11 rounded-xl bg-muted/20 border-none px-4" />
+            <Label className="text-[10px] font-black uppercase tracking-widest opacity-60">Price Amount (smallest unit · THB: ฿690 → 69000)</Label>
+            <Input type="number" value={form.price_amount} onChange={(e) => setForm({ ...form, price_amount: parseInt(e.target.value) })} className="h-11 rounded-xl bg-muted/20 border-none px-4" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label className="text-[10px] font-black uppercase tracking-widest opacity-60">Internal App Route</Label>
@@ -200,7 +193,7 @@ const AdminProducts = () => {
             </div>
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-right hidden sm:block">
-                 <p className="font-black text-xs text-primary">฿{(p.price_thb || (p.price_cents / 100) * 35).toLocaleString()}</p>
+                 <p className="font-black text-xs text-primary">{p.currency.toUpperCase()} {(p.price_amount / 100).toLocaleString()}</p>
                  <p className="text-[9px] uppercase font-bold text-muted-foreground opacity-40">{p.slug}</p>
               </div>
               <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

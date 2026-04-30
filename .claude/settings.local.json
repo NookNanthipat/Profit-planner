@@ -3,7 +3,9 @@
     "allow": [
       "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
       "Bash(supabase.exe db *)",
-      "Bash(bun dev *)"
+      "Bash(bun dev *)",
+      "PowerShell(Get-Process *)",
+      "Bash(git add *)"
     ]
   }
 }

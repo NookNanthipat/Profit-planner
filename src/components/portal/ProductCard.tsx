@@ -13,25 +13,17 @@ interface Props {
   entitlement?: UserProduct;
 }
 
-const formatPrice = (product: Product, lang: string) => {
-  const isThai = lang.startsWith("th");
-  if (isThai) {
-    const value = product.price_thb !== null ? product.price_thb : (product.price_cents / 100) * 35;
-    return new Intl.NumberFormat("th-TH", { 
-      style: "currency", 
-      currency: "THB",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  } else {
-    const value = product.price_cents / 100;
-    return new Intl.NumberFormat("en-US", { 
-      style: "currency", 
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  }
+const formatPrice = (product: Product) => {
+  const raw = Number(product.price_amount);
+  const value = isNaN(raw) ? 0 : raw / 100;
+  const currency = product.currency?.toUpperCase() || "THB";
+  const locale = currency === "THB" ? "th-TH" : "en-US";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
 };
 
 const ProductCard = ({ product, entitlement }: Props) => {
@@ -47,7 +39,7 @@ const ProductCard = ({ product, entitlement }: Props) => {
   const isTrial = isActive && entitlement?.status === "trial";
   
   // A user has a "Free Version" if they have an entitlement but the product's primary price is 0
-  const isFreeVersion = isActive && product.price_cents === 0;
+  const isFreeVersion = isActive && product.price_amount === 0;
 
   const getBadgeText = () => {
     if (isComingSoon) return t("product.coming_soon") === "product.coming_soon" ? "Coming Soon" : t("product.coming_soon");
@@ -99,7 +91,7 @@ const ProductCard = ({ product, entitlement }: Props) => {
             {isThai ? "ราคาเริ่มต้น" : "Starting from"}
           </span>
           <span className="text-xl font-black text-foreground tracking-tighter">
-             {formatPrice(product, lang)}
+             {formatPrice(product)}
           </span>
         </div>
         

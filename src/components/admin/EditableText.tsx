@@ -55,9 +55,7 @@ export const EditableText = ({ section, fieldKey, defaultValue, className, multi
         };
 
         if (col === "price" && type === "number") {
-          updateData.price_cents = Math.round(parseFloat(tempValue) * 100);
-        } else if (col === "pricethb" && type === "number") {
-          updateData.price_thb = Math.round(parseFloat(tempValue));
+          updateData.price_amount = Math.round(parseFloat(tempValue) * 100);
         } else {
           updateData[columnName] = valToSave;
         }

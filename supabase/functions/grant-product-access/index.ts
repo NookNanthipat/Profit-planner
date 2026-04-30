@@ -35,7 +35,7 @@ interface RequestBody {
 interface Product {
   id: string;
   name: string;
-  price_cents: number;
+  price_amount: number;
   currency: string;
   app_route: string | null;
   is_active: boolean;
@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
     // ── 4. ตรวจสอบ product ────────────────────────────────────────────────
     const { data: product, error: productError } = await supabaseAdmin
       .from("products")
-      .select("id, name, price_cents, currency, app_route, is_active")
+      .select("id, name, price_amount, currency, app_route, is_active")
       .eq("id", productId)
       .eq("is_active", true)
       .maybeSingle();
@@ -154,7 +154,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // ตรวจสอบ amount (ป้องกัน pay น้อยกว่าราคาจริง)
-      if (pi.amount < product.price_cents) {
+      if (pi.amount < product.price_amount) {
         return errorResponse("Payment amount is less than product price");
       }
 
