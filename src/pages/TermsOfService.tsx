@@ -160,10 +160,7 @@ const TermsOfService = () => {
                 <ul className="list-disc pl-5 space-y-1">
                   <li>ราคาแสดงรวม VAT แล้ว (ถ้ามี)</li>
                   <li>ชำระเงินผ่านช่องทางที่ระบุใน Checkout เท่านั้น</li>
-<<<<<<< HEAD
-=======
                   <li>การชำระเงินประมวลผลอย่างปลอดภัยโดย <strong>Stripe, Inc.</strong> — ProfitPlanner ไม่จัดเก็บหมายเลขบัตรเครดิต</li>
->>>>>>> a2a1ac5 (feat: PDPA compliance, legal pages, Google consent flow, Netlify config)
                   <li>มีนโยบายคืนเงินภายใน 30 วัน — ดูรายละเอียดที่ <Link to="/refund" className="text-primary hover:underline">นโยบายการคืนเงิน</Link></li>
                 </ul>
               </>
@@ -173,10 +170,7 @@ const TermsOfService = () => {
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Prices are displayed inclusive of VAT (where applicable)</li>
                   <li>Payment must be made through channels specified in Checkout only</li>
-<<<<<<< HEAD
-=======
                   <li>Payments are securely processed by <strong>Stripe, Inc.</strong> — ProfitPlanner does not store card numbers.</li>
->>>>>>> a2a1ac5 (feat: PDPA compliance, legal pages, Google consent flow, Netlify config)
                   <li>30-day money-back guarantee — see <Link to="/refund" className="text-primary hover:underline">Refund Policy</Link> for details</li>
                 </ul>
               </>
