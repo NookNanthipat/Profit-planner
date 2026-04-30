@@ -106,15 +106,45 @@ const RefundPolicy = () => {
 
           <Section title={isTh ? "4. การยกเลิกสมาชิก" : "4. Cancellation"}>
             {isTh ? (
-              <p>
-                คุณสามารถยกเลิกการสมัครสมาชิกได้ตลอดเวลาในหน้า Portal → Danger Zone → Delete Account
-                การยกเลิกจะมีผลทันทีและคุณจะสามารถใช้งานได้ถึงสิ้นรอบบิลปัจจุบัน
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold text-foreground mb-1">ยกเลิกการสมัครสมาชิก (Subscription)</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>ยกเลิกได้ตลอดเวลาโดยติดต่อ <strong>support@profitplanner.app</strong></li>
+                    <li>หลังยกเลิก คุณยังคงใช้งานได้จนถึงวันสิ้นสุดรอบบิลปัจจุบัน</li>
+                    <li>จะไม่มีการเรียกเก็บเงินในรอบถัดไป</li>
+                    <li>ข้อมูลและบัญชีของคุณ<strong>ยังคงอยู่</strong> — สามารถสมัครใหม่ได้ทุกเมื่อ</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">ลบบัญชีผู้ใช้ (Account Deletion)</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>ลบบัญชีได้ที่ Portal → Danger Zone → Delete Account</li>
+                    <li>การลบบัญชีจะยกเลิก subscription และลบข้อมูลทั้งหมดอย่างถาวร</li>
+                    <li><strong>ไม่สามารถย้อนคืนได้</strong> — หากต้องการแค่หยุดจ่ายเงิน ให้ยกเลิก subscription แทน</li>
+                  </ul>
+                </div>
+              </div>
             ) : (
-              <p>
-                You may cancel your subscription at any time via Portal → Danger Zone → Delete Account.
-                Cancellation takes effect immediately and you retain access until the end of the current billing period.
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold text-foreground mb-1">Cancel Subscription</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Cancel at any time by contacting <strong>support@profitplanner.app</strong></li>
+                    <li>After cancellation, you retain full access until the end of the current billing period</li>
+                    <li>No further charges will be made</li>
+                    <li>Your account and data <strong>remain intact</strong> — you can resubscribe at any time</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">Delete Account</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Delete your account via Portal → Danger Zone → Delete Account</li>
+                    <li>Account deletion cancels your subscription and permanently removes all data</li>
+                    <li><strong>This cannot be undone</strong> — if you only want to stop billing, cancel your subscription instead</li>
+                  </ul>
+                </div>
+              </div>
             )}
           </Section>
 

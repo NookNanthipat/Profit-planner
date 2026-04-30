@@ -41,6 +41,13 @@ const Auth = () => {
     if (session) navigate(redirectTo, { replace: true });
   }, [session, navigate, redirectTo]);
 
+  const switchMode = () => {
+    setMode(mode === "signin" ? "signup" : "signin");
+    setAcceptedTos(false);
+    setAcceptedPrivacy(false);
+    setAcceptedMarketing(false);
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "signup" && (!acceptedTos || !acceptedPrivacy)) {
@@ -60,7 +67,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/portal`,
+            emailRedirectTo: `${window.location.origin}/login`,
             data: {
               display_name: displayName,
               // PDPA consent — บันทึกผ่าน handle_new_user trigger
@@ -85,19 +92,57 @@ const Auth = () => {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: isTh ? "เกิดข้อผิดพลาด" : "Error", description: message, variant: "destructive" });
+      const isAlreadyRegistered =
+        message.toLowerCase().includes("already registered") ||
+        message.toLowerCase().includes("already been registered") ||
+        message.toLowerCase().includes("user already exists");
+      if (isAlreadyRegistered) {
+        toast({
+          title: isTh ? "อีเมลนี้ถูกใช้ไปแล้ว" : "Email already in use",
+          description: isTh
+            ? "อีเมลนี้มีบัญชีอยู่แล้ว — ลองเข้าสู่ระบบ หรือใช้ปุ่ม 'เข้าสู่ระบบด้วย Google' แทน"
+            : "This email is already registered — try signing in, or use 'Continue with Google' instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: isTh ? "เกิดข้อผิดพลาด" : "Error", description: message, variant: "destructive" });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogle = async () => {
+    if (mode === "signup" && (!acceptedTos || !acceptedPrivacy)) {
+      toast({
+        title: isTh ? "ต้องยอมรับข้อตกลง" : "Terms acceptance required",
+        description: isTh
+          ? "กรุณายอมรับข้อตกลงการใช้งานและนโยบายความเป็นส่วนตัวก่อน"
+          : "Please accept the Terms of Service and Privacy Policy first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Save consent to localStorage before OAuth redirect so useAuth can record it after callback
+    if (mode === "signup") {
+      localStorage.setItem("pp_pending_consent", JSON.stringify({
+        accepted_tos: acceptedTos,
+        accepted_privacy: acceptedPrivacy,
+        accepted_marketing: acceptedMarketing,
+        policy_version: "1.0",
+        user_agent: navigator.userAgent,
+      }));
+    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/portal` },
+      options: {
+        redirectTo: `${window.location.origin}/portal`,
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error) {
+      localStorage.removeItem("pp_pending_consent");
       toast({ title: isTh ? "Google ล้มเหลว" : "Google sign-in failed", description: error.message, variant: "destructive" });
       setLoading(false);
     }
@@ -132,7 +177,71 @@ const Auth = () => {
         </div>
 
         <Card className="p-6 backdrop-blur-xl bg-card/80 border-border/60 shadow-xl">
-          <Button type="button" variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading}>
+
+          {/* Consent section — shown first in signup mode, applies to both Google and email/password */}
+          {mode === "signup" && (
+            <div className="space-y-3 mb-5 pb-5 border-b border-border">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="tos"
+                  checked={acceptedTos}
+                  onCheckedChange={(v) => setAcceptedTos(!!v)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="tos" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                  <span className="text-destructive font-bold mr-1">*</span>
+                  {isTh ? (
+                    <>ฉันได้อ่านและยอมรับ <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ข้อตกลงการใช้งาน</a> ของ ProfitPlanner</>
+                  ) : (
+                    <>I have read and agree to the <a href="/tos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms of Service</a> of ProfitPlanner.</>
+                  )}
+                </Label>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="privacy"
+                  checked={acceptedPrivacy}
+                  onCheckedChange={(v) => setAcceptedPrivacy(!!v)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="privacy" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                  <span className="text-destructive font-bold mr-1">*</span>
+                  {isTh ? (
+                    <>ฉันได้อ่านและยอมรับ <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้เก็บรวบรวมข้อมูลส่วนบุคคลเพื่อให้บริการ ProfitPlanner</>
+                  ) : (
+                    <>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</a>, and consent to the collection of my personal data to provide the ProfitPlanner service.</>
+                  )}
+                </Label>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="marketing"
+                  checked={acceptedMarketing}
+                  onCheckedChange={(v) => setAcceptedMarketing(!!v)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="marketing" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                  {isTh
+                    ? "ฉันยินยอมรับข่าวสาร อัปเดต และโปรโมชั่นจาก ProfitPlanner ทางอีเมล (ไม่บังคับ)"
+                    : "I agree to receive news, updates, and promotions from ProfitPlanner by email. (Optional)"}
+                </Label>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground/60">
+                {isTh ? "* จำเป็นต้องยอมรับก่อนดำเนินการต่อ" : "* Required to proceed"}
+              </p>
+            </div>
+          )}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mb-4"
+            onClick={handleGoogle}
+            disabled={loading || (mode === "signup" && (!acceptedTos || !acceptedPrivacy))}
+          >
             <GoogleIcon />
             <span className="ml-2">{isTh ? "เข้าสู่ระบบด้วย Google" : "Continue with Google"}</span>
           </Button>
@@ -167,6 +276,7 @@ const Auth = () => {
               <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signin" ? "current-password" : "new-password"} />
             </div>
 
+<<<<<<< HEAD
             {mode === "signup" && (
               <div className="space-y-3 pt-2">
                 {/* Required: Terms of Service */}
@@ -226,6 +336,8 @@ const Auth = () => {
               </div>
             )}
 
+=======
+>>>>>>> a2a1ac5 (feat: PDPA compliance, legal pages, Google consent flow, Netlify config)
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : mode === "signin" ? (isTh ? "เข้าสู่ระบบ" : "Sign in") : isTh ? "สมัครสมาชิก" : "Create account"}
             </Button>
@@ -233,7 +345,7 @@ const Auth = () => {
 
           <p className="text-sm text-center text-muted-foreground mt-6">
             {mode === "signin" ? (isTh ? "ยังไม่มีบัญชี?" : "Don't have an account?") : isTh ? "มีบัญชีอยู่แล้ว?" : "Already have an account?"}{" "}
-            <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="text-primary font-medium hover:underline">
+            <button type="button" onClick={switchMode} className="text-primary font-medium hover:underline">
               {mode === "signin" ? (isTh ? "สมัครเลย" : "Sign up") : isTh ? "เข้าสู่ระบบ" : "Sign in"}
             </button>
           </p>

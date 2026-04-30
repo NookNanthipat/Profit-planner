@@ -4,6 +4,9 @@
 .env.*.local
 .env.production
 
+# Claude Code memory (contains personal info)
+.claude/
+
 # Logs
 logs
 *.log

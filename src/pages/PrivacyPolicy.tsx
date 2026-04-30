@@ -107,9 +107,15 @@ const PrivacyPolicy = () => {
               </table>
             </div>
             {isTh ? (
-              <p className="text-sm">เราไม่ขายข้อมูลส่วนบุคคลหรือข้อมูลทางการเงินของคุณให้กับบุคคลที่สามใด ๆ</p>
+              <>
+                <p className="text-sm">เราไม่ขายข้อมูลส่วนบุคคลหรือข้อมูลทางการเงินของคุณให้กับบุคคลที่สามใด ๆ</p>
+                <p className="text-sm">เราไม่จัดเก็บข้อมูลบัตรเครดิต — ข้อมูลการชำระเงินถูกเก็บรักษาและประมวลผลโดย Stripe Inc. โดยตรง</p>
+              </>
             ) : (
-              <p className="text-sm">We do not sell your personal or financial data to any third party.</p>
+              <>
+                <p className="text-sm">We do not sell your personal or financial data to any third party.</p>
+                <p className="text-sm">We do not store credit card data — payment information is stored and processed directly by Stripe Inc.</p>
+              </>
             )}
           </Section>
 
@@ -154,6 +160,14 @@ const PrivacyPolicy = () => {
                     <td className="px-4 py-2">{isTh ? "Hosting" : "Hosting"}</td>
                     <td className="px-4 py-2">USA</td>
                   </tr>
+<<<<<<< HEAD
+=======
+                  <tr>
+                    <td className="px-4 py-2">Stripe Inc.</td>
+                    <td className="px-4 py-2">{isTh ? "ประมวลผลการชำระเงิน (ข้อมูลบัตรเก็บโดย Stripe ไม่ใช่ ProfitPlanner)" : "Payment processing (card data stored by Stripe, not ProfitPlanner)"}</td>
+                    <td className="px-4 py-2">USA</td>
+                  </tr>
+>>>>>>> a2a1ac5 (feat: PDPA compliance, legal pages, Google consent flow, Netlify config)
                 </tbody>
               </table>
             </div>
