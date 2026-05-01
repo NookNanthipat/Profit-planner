@@ -25,12 +25,18 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { formatMoney, type PPAccount, type PPTransaction } from "@/lib/profitPlanner";
+import { formatMoney, type PPAccount, type PPTransaction, type PPPerson } from "@/lib/profitPlanner";
 import confetti from "canvas-confetti";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DebtType = "credit_card" | "installment" | "mortgage" | "car" | "personal" | "other";
 type PeriodStatus = "paid" | "overdue" | "future";
+
+interface SplitParticipantConfig {
+  person_id: string | null;
+  mode: "amount" | "percent";
+  value: number;
+}
 
 interface PPDebt {
   id: string;
@@ -49,6 +55,9 @@ interface PPDebt {
   paid_months: number;
   note: string | null;
   is_active: boolean;
+  recurring_id: string | null;
+  is_shared: boolean;
+  split_config: SplitParticipantConfig[] | null;
   created_at: string;
 }
 
@@ -167,7 +176,16 @@ function PayModal({ debt, rows, onClose, onPaid }: { debt: PPDebt; rows: AmortRo
     try {
       const catId = await ensureDebtSubCategory(user.id, debt.name);
       const principalPaid = selectedRow.principal + extraPrincipal;
-      await supabase.from("pp_transactions").insert({ user_id: user.id, account_id: debt.account_id, category_id: catId, debt_id: debt.id, type: "expense", amount: payAmount, occurred_on: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}${extraPrincipal > 0 ? ` (+${formatMoney(extraPrincipal)})` : ""}` });
+      const { data: tx, error: txErr } = await supabase.from("pp_transactions").insert({ user_id: user.id, account_id: debt.account_id, category_id: catId, debt_id: debt.id, type: "expense", amount: payAmount, occurred_on: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}${extraPrincipal > 0 ? ` (+${formatMoney(extraPrincipal)})` : ""}` }).select("id").single();
+      if (txErr) throw txErr;
+      if (debt.is_shared && debt.split_config?.length && tx?.id) {
+        const { data: split } = await supabase.from("pp_splits").insert({ user_id: user.id, transaction_id: tx.id, due_date: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}` }).select("id").single();
+        if (split?.id) {
+          await supabase.from("pp_split_participants").insert(
+            debt.split_config.map((p) => ({ split_id: split.id, person_id: p.person_id, mode: p.mode, value: p.value, actual_amount: p.mode === "percent" ? Math.round(payAmount * p.value) / 100 : p.value }))
+          );
+        }
+      }
       const newRemaining = Math.max(0, debt.remaining_amount - principalPaid);
       await supabase.from("pp_debts").update({ paid_months: debt.paid_months + 1, remaining_amount: newRemaining, is_active: newRemaining > 0.01 }).eq("id", debt.id);
       if (newRemaining <= 0.01) fireCelebration(); toast({ title: t("app.common.success") }); onPaid(); onClose();
@@ -341,23 +359,60 @@ const BLANK = { name: "", type: "personal" as DebtType, lender: "", account_id: 
 
 function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; item: PPDebt | null; accounts: PPAccount[]; onSaved: () => void; }) {
   const { t } = useTranslation();
-  const { user } = useAuth(); const { toast } = useToast(); const [f, setF] = useState({ ...BLANK }); const [saving, setSaving] = useState(false); const [triedSubmit, setTriedSubmit] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [f, setF] = useState({ ...BLANK });
+  const [saving, setSaving] = useState(false);
+  const [triedSubmit, setTriedSubmit] = useState(false);
+  const [autoRecurring, setAutoRecurring] = useState(true);
+  const [isShared, setIsShared] = useState(false);
+  const [persons, setPersons] = useState<PPPerson[]>([]);
+  const [splitParticipants, setSplitParticipants] = useState<SplitParticipantConfig[]>([]);
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
+
   useEffect(() => {
-    if (!open) { setTriedSubmit(false); return; }
-    setF(item ? { name: item.name, type: item.type, lender: item.lender ?? "", account_id: item.account_id ?? "", total_amount: String(item.total_amount), remaining_amount: String(item.remaining_amount), monthly_payment: String(item.monthly_payment), annual_rate: String(item.annual_rate), start_date: item.start_date, due_day: String(item.due_day ?? ""), total_months: String(item.total_months ?? ""), paid_months: String(item.paid_months), note: item.note ?? "", is_active: item.is_active } : { ...BLANK });
+    if (!open) { setTriedSubmit(false); setIsShared(false); setSplitParticipants([]); setAutoRecurring(true); return; }
+    if (item) {
+      setF({ name: item.name, type: item.type, lender: item.lender ?? "", account_id: item.account_id ?? "", total_amount: String(item.total_amount), remaining_amount: String(item.remaining_amount), monthly_payment: String(item.monthly_payment), annual_rate: String(item.annual_rate), start_date: item.start_date, due_day: String(item.due_day ?? ""), total_months: String(item.total_months ?? ""), paid_months: String(item.paid_months), note: item.note ?? "", is_active: item.is_active });
+      setIsShared(item.is_shared ?? false);
+      setSplitParticipants(item.split_config ?? []);
+      setAutoRecurring(false);
+    } else {
+      setF({ ...BLANK });
+      setAutoRecurring(true);
+      setIsShared(false);
+      setSplitParticipants([]);
+    }
   }, [open, item]);
+
+  useEffect(() => {
+    if (!isShared || !user) return;
+    supabase.from("pp_persons").select("*").eq("user_id", user.id).order("name").then(({ data }) => setPersons((data ?? []) as PPPerson[]));
+  }, [isShared, user]);
+
+  const toggleSplitPerson = (personId: string | null) => {
+    const exists = splitParticipants.some(p => p.person_id === personId);
+    if (exists) {
+      setSplitParticipants(splitParticipants.filter(p => p.person_id !== personId));
+    } else {
+      setSplitParticipants([...splitParticipants, { person_id: personId, mode: "percent", value: 50 }]);
+    }
+  };
+
+  const updateSplitParticipant = (personId: string | null, field: "mode" | "value", val: any) => {
+    setSplitParticipants(splitParticipants.map(p => p.person_id === personId ? { ...p, [field]: val } : p));
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!user) return; setTriedSubmit(true);
     const total = parseFloat(f.total_amount), remaining = parseFloat(f.remaining_amount), monthly = parseFloat(f.monthly_payment);
     if (!f.name || isNaN(total) || isNaN(remaining) || isNaN(monthly)) { toast({ title: t("app.common.error"), variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const row = { user_id: user.id, name: f.name.trim(), type: f.type, lender: f.lender || null, account_id: f.account_id || null, total_amount: total, remaining_amount: remaining, monthly_payment: monthly, annual_rate: parseFloat(f.annual_rate) || 0, start_date: f.start_date, due_day: f.due_day ? parseInt(f.due_day) : null, total_months: f.total_months ? parseInt(f.total_months) : null, paid_months: parseInt(f.paid_months) || 0, note: f.note || null, is_active: f.is_active };
-      const { data: newDebt, error } = item 
-        ? await supabase.from("pp_debts").update(row).eq("id", item.id).select().single() 
+      const row = { user_id: user.id, name: f.name.trim(), type: f.type, lender: f.lender || null, account_id: f.account_id || null, total_amount: total, remaining_amount: remaining, monthly_payment: monthly, annual_rate: parseFloat(f.annual_rate) || 0, start_date: f.start_date, due_day: f.due_day ? parseInt(f.due_day) : null, total_months: f.total_months ? parseInt(f.total_months) : null, paid_months: parseInt(f.paid_months) || 0, note: f.note || null, is_active: f.is_active, is_shared: isShared, split_config: isShared && splitParticipants.length > 0 ? splitParticipants : null };
+      const { data: newDebt, error } = item
+        ? await supabase.from("pp_debts").update(row).eq("id", item.id).select().single()
         : await supabase.from("pp_debts").insert(row).select().single();
-      
       if (error) throw error;
       const catId = await ensureDebtSubCategory(user.id, row.name);
       if (!item && row.paid_months > 0 && row.account_id) {
@@ -366,16 +421,22 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
         for (let i = 1; i <= row.paid_months; i++) {
           const d = new Date(sy, sm - 1 + (i - 1), row.due_day || 1);
           if (d.getMonth() !== (sm - 1 + (i - 1)) % 12) d.setDate(0);
-          inserts.push({ user_id: user.id, account_id: row.account_id, category_id: catId, debt_id: newDebt.id, type: "expense", amount: row.monthly_payment, occurred_on: format(d, "yyyy-MM-dd"), note: `${row.name} — Initial History (Period ${i})`, });
+          inserts.push({ user_id: user.id, account_id: row.account_id, category_id: catId, debt_id: newDebt.id, type: "expense", amount: row.monthly_payment, occurred_on: format(d, "yyyy-MM-dd"), note: `${row.name} — Initial History (Period ${i})` });
         }
         await supabase.from("pp_transactions").insert(inserts);
+      }
+      if (!item && autoRecurring && row.account_id) {
+        const { data: rec } = await supabase.from("pp_recurring").insert({ user_id: user.id, name: `${row.name} — Monthly`, type: "expense", category_id: catId, account_id: row.account_id, amount: row.monthly_payment, currency: "THB", frequency: "monthly", start_date: row.start_date, end_date: null, is_active: true, note: `Auto: ${row.name}` }).select("id").single();
+        if (rec?.id) await supabase.from("pp_debts").update({ recurring_id: rec.id }).eq("id", newDebt.id);
+      } else if (item && item.recurring_id) {
+        await supabase.from("pp_recurring").update({ amount: row.monthly_payment, is_active: row.is_active }).eq("id", item.recurring_id);
       }
       toast({ title: t("app.common.success") }); onSaved(); onOpenChange(false);
     } catch (e: any) { toast({ title: t("app.common.error"), description: e.message, variant: "destructive" }); } finally { setSaving(false); }
   };
   const Field = (label: string, key: string, type = "text", placeholder = "", required = false) => {
     const val = (f as any)[key]; const isError = triedSubmit && required && (!val || (type === "number" && isNaN(parseFloat(val))));
-    if (type === "date") { 
+    if (type === "date") {
       const dObj = val ? new Date(val + "T00:00:00") : undefined;
       const isValid = dObj && !isNaN(dObj.getTime());
       return (
@@ -394,6 +455,42 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
           <div className="space-y-2.5"><Label className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">{t("app.common.category")}</Label><div className="flex flex-wrap gap-2">{DEBT_TYPES.map(tType => (<button type="button" key={tType.key} onClick={() => set("type", tType.key)} className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase transition-all shadow-sm ${f.type === tType.key ? "text-white scale-105" : "bg-muted/30 text-muted-foreground"}`} style={f.type === tType.key ? { backgroundColor: tType.color } : {}}><tType.icon size={14} />{t(`app.types.debt.${tType.key}`)}</button>))}</div></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="md:col-span-2">{Field(t("app.common.name"), "name", "text", "e.g. Home Loan", true)}</div>{Field("Institution", "lender", "text", "e.g. JPMorgan")}{Field("APR %", "annual_rate", "number", "4.25")}{Field("Principal", "total_amount", "number", "0.00", true)}{Field("Balance", "remaining_amount", "number", "0.00", true)}{Field("Monthly Due", "monthly_payment", "number", "0.00", true)}{Field("Tenor", "total_months", "number", "360")}{Field("Completed", "paid_months", "number", "0")}{Field("Agreement Date", "start_date", "date")}{Field("Billing Day", "due_day", "number", "01")}</div>
           <div className="space-y-2"><Label className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">{t("app.common.account")}</Label><Select value={f.account_id || "none"} onValueChange={v => set("account_id", v === "none" ? "" : v)}><SelectTrigger className="h-10 rounded-xl bg-muted/20 border-none shadow-inner"><SelectValue placeholder={t("app.common.account")} /></SelectTrigger><SelectContent className="rounded-xl">{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}<SelectItem value="none">Manual Pay</SelectItem></SelectContent></Select></div>
+          {!item && (
+            <div className="flex items-center justify-between bg-primary/5 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-primary/20">
+              <div><Label className="text-xs font-black uppercase tracking-widest">Auto-Create Recurring</Label><p className="text-[9px] text-muted-foreground mt-0.5">Add monthly payment to Recurring schedule</p></div>
+              <Switch checked={autoRecurring} onCheckedChange={setAutoRecurring} />
+            </div>
+          )}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between bg-muted/10 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-border/30">
+              <div><Label className="text-xs font-black uppercase tracking-widest">Shared Debt</Label><p className="text-[9px] text-muted-foreground mt-0.5">Split this loan with others</p></div>
+              <Switch checked={isShared} onCheckedChange={setIsShared} />
+            </div>
+            {isShared && (
+              <div className="space-y-2 px-1">
+                {[{ id: null as string | null, name: "Me (Self)" }, ...persons].map((p) => {
+                  const pid = p.id ?? null;
+                  const current = splitParticipants.find(sp => sp.person_id === pid);
+                  return (
+                    <div key={String(pid)} className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${current ? "border-primary/30 bg-primary/5" : "border-border/30 bg-muted/5"}`}>
+                      <button type="button" onClick={() => toggleSplitPerson(pid)} className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors text-[8px] font-black ${current ? "bg-primary border-primary text-white" : "border-muted-foreground/40"}`}>{current && "✓"}</button>
+                      <span className="text-[11px] font-bold flex-1 truncate">{p.name}</span>
+                      {current && (
+                        <>
+                          <Select value={current.mode} onValueChange={v => updateSplitParticipant(pid, "mode", v)}>
+                            <SelectTrigger className="h-7 w-16 rounded-lg text-[9px] font-bold border-none bg-muted/20"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="amount">฿</SelectItem></SelectContent>
+                          </Select>
+                          <Input type="number" value={current.value} onChange={e => updateSplitParticipant(pid, "value", parseFloat(e.target.value) || 0)} className="h-7 w-16 rounded-lg text-[9px] font-bold text-right border-none bg-muted/20 px-2" />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                {persons.length === 0 && <p className="text-[9px] text-muted-foreground pl-1 italic">Add people in the Splits section to enable sharing.</p>}
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-between bg-muted/10 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-border/30"><div><Label className="text-xs font-black uppercase tracking-widest">{t("app.common.status")}</Label></div><Switch checked={f.is_active} onCheckedChange={v => set("is_active", v)} /></div>
           <DialogFooter className="gap-2 pt-2"><Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl md:rounded-2xl font-black uppercase text-[10px]">{t("app.common.discard")}</Button><Button type="submit" disabled={saving} className="rounded-xl md:rounded-2xl h-11 md:h-12 px-8 md:px-10 font-black uppercase text-[10px] md:text-[11px] tracking-widest" style={{ backgroundColor: DEBT_TYPES.find(tType => tType.key === f.type)?.color }}>{saving ? <Loader2 size={16} className="animate-spin" /> : item ? t("app.common.update") : t("app.common.add")}</Button></DialogFooter>
         </form>
@@ -425,8 +522,13 @@ function DebtCard({ debt, history, onEdit, onDelete, onSchedule }: { debt: PPDeb
             <p className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60">{isFinished ? t("app.debt.cleared") : t("app.debt.remaining")}</p>
           </div>
         </div>
-        {!isFinished && (overdueCount > 0 || (nextDue && nextDue.diff <= 7)) && (
-          <div className="flex gap-1.5">{overdueCount > 0 && <Badge className="bg-rose-500 text-white border-none text-[8px] font-black uppercase h-5 px-2 animate-pulse rounded-full">⚠️ {overdueCount} {t("app.debt.overdue")}</Badge>}{overdueCount === 0 && nextDue && nextDue.diff <= 7 && <Badge className={`border-none text-[8px] font-black uppercase h-5 px-2 rounded-full text-white ${nextDue.diff <= 3 ? "bg-rose-500" : "bg-amber-500"}`}>Due in {nextDue.diff}d</Badge>}</div>
+        {(debt.recurring_id || debt.is_shared || (!isFinished && (overdueCount > 0 || (nextDue && nextDue.diff <= 7)))) && (
+          <div className="flex gap-1.5 flex-wrap">
+            {debt.recurring_id && <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase h-5 px-2 rounded-full">🔁 Recurring</Badge>}
+            {debt.is_shared && <Badge className="bg-violet-500/10 text-violet-600 border-none text-[8px] font-black uppercase h-5 px-2 rounded-full">👥 Shared</Badge>}
+            {!isFinished && overdueCount > 0 && <Badge className="bg-rose-500 text-white border-none text-[8px] font-black uppercase h-5 px-2 animate-pulse rounded-full">⚠️ {overdueCount} {t("app.debt.overdue")}</Badge>}
+            {!isFinished && overdueCount === 0 && nextDue && nextDue.diff <= 7 && <Badge className={`border-none text-[8px] font-black uppercase h-5 px-2 rounded-full text-white ${nextDue.diff <= 3 ? "bg-rose-500" : "bg-amber-500"}`}>Due in {nextDue.diff}d</Badge>}
+          </div>
         )}
         <div className="space-y-1.5"><div className="flex justify-between text-[8px] lg:text-[9px] font-black uppercase tracking-widest opacity-60"><span>{paidPct.toFixed(0)}% {t("app.debt.repaid")}</span><span>{formatMoney(debt.total_amount)}</span></div><Progress value={paidPct} className={`h-1.5 lg:h-2.5 rounded-full bg-muted/40 shadow-inner ${isFinished ? "[&>div]:bg-emerald-500" : "[&>div]:bg-primary/80"}`} /></div>
         <div className="grid grid-cols-2 gap-2">{[{ label: t("app.recurring.monthlyBurn"), v: formatMoney(debt.monthly_payment) }, { label: "Completed", v: `${history.length} terms` }].map(s => (<div key={s.label} className="rounded-xl lg:rounded-2xl p-2.5 lg:p-3 border border-border/30 bg-muted/10"><p className="text-[8px] font-black text-muted-foreground uppercase mb-1">{s.label}</p><p className="text-[9px] lg:text-[10px] font-black uppercase tracking-tight truncate">{s.v}</p></div>))}</div>
@@ -467,10 +569,14 @@ const DebtManagement = () => {
   
   useEffect(() => { load(); }, [user]);
 
-  const handleDelete = async (id: string) => { 
-    const { error } = await supabase.from("pp_debts").delete().eq("id", id); 
-    if (error) toast({ title: t("app.common.error"), description: error.message, variant: "destructive" }); 
-    else { toast({ title: t("app.common.success") }); load(); } 
+  const handleDelete = async (id: string) => {
+    const debt = debts.find(d => d.id === id);
+    if (debt?.recurring_id) {
+      await supabase.from("pp_recurring").update({ is_active: false }).eq("id", debt.recurring_id);
+    }
+    const { error } = await supabase.from("pp_debts").delete().eq("id", id);
+    if (error) toast({ title: t("app.common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: t("app.common.success") }); load(); }
   };
   
   const filtered = debts.filter(d => (filterType === "all" || d.type === filterType) && (showInactive || d.is_active));
