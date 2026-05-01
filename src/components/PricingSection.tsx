@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./admin/EditableText";
 import { EditableButton } from "./admin/EditableButton";
+import { useProductAccess } from "@/hooks/useProductAccess";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Plan {
   name: string;
@@ -16,10 +18,26 @@ interface Plan {
 }
 
 const PricingSection = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { ds, overrides } = useSiteContent("pricing");
   const rawPlans = t("pricing.plans", { returnObjects: true });
   const plans = Array.isArray(rawPlans) ? (rawPlans as Plan[]) : [];
+  const { user } = useAuth();
+  const { hasAccess, isPro } = useProductAccess("profit-planner");
+
+  const getPlanLabel = (plan: Plan, i: number) => {
+    if (plan.popular && isPro) return i18n.language?.startsWith("th") ? "เข้าใช้งาน" : "Go to App";
+    return ds(`plan_${i}_cta`, `pricing.plans.${i}.cta`);
+  };
+
+  const getPlanHref = (plan: Plan, i: number) => {
+    if (plan.popular) {
+      return isPro ? "/app/profit-planner" : (overrides[`plan_${i}_cta_href`] || "/checkout/profit-planner");
+    }
+    const stored = overrides[`plan_${i}_cta_href`];
+    if (stored) return stored;
+    return user ? "/portal" : "/login";
+  };
 
   return (
     <section id="pricing" className="section-padding">
@@ -84,11 +102,11 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <EditableButton 
-                section="pricing" 
-                fieldKey={`plan_${i}_cta`} 
-                defaultLabel={ds(`plan_${i}_cta`, `pricing.plans.${i}.cta`)} 
-                defaultHref={overrides[`plan_${i}_cta_href`] || "#"}
+              <EditableButton
+                section="pricing"
+                fieldKey={`plan_${i}_cta`}
+                defaultLabel={getPlanLabel(plan, i)}
+                defaultHref={getPlanHref(plan, i)}
                 className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center ${
                   plan.popular
                     ? "btn-primary shadow-lg shadow-primary/20"

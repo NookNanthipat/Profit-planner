@@ -8,6 +8,8 @@ import { EditableButton } from "./admin/EditableButton";
 import { useAdminEdit } from "@/context/AdminEditContext";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useProductAccess } from "@/hooks/useProductAccess";
+import { useAuth } from "@/hooks/useAuth";
 
 const iconMap: any = {
   "Personal Finance App": LayoutDashboard,
@@ -17,18 +19,21 @@ const iconMap: any = {
 
 const SuiteSection = () => {
   const { t } = useTranslation();
-  const { isEditMode } = useAdminEdit();
+  const { isEditMode, previewLanguage } = useAdminEdit();
   const { toast } = useToast();
   const { ds, dsList, refresh, overrides } = useSiteContent("suite");
   const items = dsList("suite_list", "suite.items");
+  const { user } = useAuth();
+  const { hasAccess } = useProductAccess("profit-planner");
 
   const saveList = async (newList: any[]) => {
     try {
+      const activeLang = previewLanguage.split('-')[0];
+      const fieldName = activeLang === "th" ? "value_th" : "value_en";
       const { error } = await supabase.from("pp_site_content").upsert({
         section: "suite",
         key: "suite_list",
-        value_en: JSON.stringify(newList),
-        value_th: JSON.stringify(newList),
+        [fieldName]: JSON.stringify(newList),
         updated_at: new Date().toISOString()
       }, { onConflict: 'section,key' });
       if (error) throw error;
@@ -37,6 +42,11 @@ const SuiteSection = () => {
     } catch (e: any) {
       toast({ title: "Save failed", description: e.message, variant: "destructive" });
     }
+  };
+
+  const getSuiteCTAHref = (i: number) => {
+    if (i === 0) return hasAccess ? "/app/profit-planner" : "/checkout/profit-planner";
+    return overrides[`item_cta_${i}_href`] || "#";
   };
 
   const addItem = (e: React.MouseEvent) => {
@@ -106,11 +116,11 @@ const SuiteSection = () => {
                   <EditableText section="suite" fieldKey={`item_desc_${i}`} defaultValue={item.desc} multiline />
                 </p>
 
-                <EditableButton 
-                  section="suite" 
-                  fieldKey={`item_cta_${i}`} 
-                  defaultLabel={item.cta} 
-                  defaultHref={overrides[`item_cta_${i}_href`] || "#"}
+                <EditableButton
+                  section="suite"
+                  fieldKey={`item_cta_${i}`}
+                  defaultLabel={item.cta}
+                  defaultHref={getSuiteCTAHref(i)}
                   className="w-full btn-outline inline-flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300 py-3"
                 />
               </motion.div>

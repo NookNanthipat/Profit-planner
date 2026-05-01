@@ -199,20 +199,20 @@ const AdminSettings = () => {
           
           <Reorder.Group axis="y" values={sectionOrder} onReorder={saveOrder} className="space-y-1.5">
             {sectionOrder.map(id => (
-              <Reorder.Item 
-                key={id} 
+              <Reorder.Item
+                key={id}
                 value={id}
                 className={cn(
                   "relative group cursor-grab active:cursor-grabbing select-none",
                   activeSection === id && "z-10"
                 )}
               >
-                <div 
+                <div
                   onClick={() => setActiveSection(id)}
                   className={cn(
                     "w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all border shrink-0 text-left",
-                    activeSection === id 
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]" 
+                    activeSection === id
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]"
                       : "bg-card/50 text-muted-foreground border-transparent hover:bg-card hover:border-border/60"
                   )}
                 >
@@ -225,7 +225,26 @@ const AdminSettings = () => {
               </Reorder.Item>
             ))}
           </Reorder.Group>
-          
+
+          <div className="mt-6 space-y-1.5">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 pl-2 opacity-60">Pages</p>
+            {["portal"].map(id => (
+              <div
+                key={id}
+                onClick={() => setActiveSection(id)}
+                className={cn(
+                  "w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all border cursor-pointer select-none",
+                  activeSection === id
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                    : "bg-card/50 text-muted-foreground border-transparent hover:bg-card hover:border-border/60"
+                )}
+              >
+                <span className="truncate">{SECTION_MAP[id]?.label || id}</span>
+                <CheckCircle2 size={12} className={cn("transition-opacity shrink-0 ml-2", activeSection === id ? "opacity-100" : "opacity-0")} />
+              </div>
+            ))}
+          </div>
+
           <div className="mt-8 space-y-4 pt-4 border-t border-border/40 pb-10">
              <div className="px-2">
                 <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-3 opacity-60">Preferences</p>

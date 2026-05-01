@@ -11,18 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 const TestimonialsSection = () => {
   const { i18n } = useTranslation();
   const isThai = i18n.language?.startsWith("th");
-  const { isEditMode } = useAdminEdit();
+  const { isEditMode, previewLanguage } = useAdminEdit();
   const { toast } = useToast();
   const { ds, dsList, refresh, overrides } = useSiteContent("testimonials");
   const items = dsList("testimonials_list", "testimonials.items");
 
   const saveList = async (newList: any[]) => {
     try {
+      const activeLang = previewLanguage.split('-')[0];
+      const fieldName = activeLang === "th" ? "value_th" : "value_en";
       const { error } = await supabase.from("pp_site_content").upsert({
         section: "testimonials",
         key: "testimonials_list",
-        value_en: JSON.stringify(newList),
-        value_th: JSON.stringify(newList),
+        [fieldName]: JSON.stringify(newList),
         updated_at: new Date().toISOString()
       }, { onConflict: 'section,key' });
       if (error) throw error;
