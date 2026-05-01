@@ -149,12 +149,12 @@
     "title": "Frequently Asked Questions",
     "description": "Everything you need to know before getting started.",
     "items": [
-      { "q": "How safe is my financial data?", "a": "We use bank-level 256-bit SSL encryption and are SOC 2 compliant. Your data is encrypted both in transit and at rest, and we never sell your information." },
-      { "q": "Can I cancel my subscription anytime?", "a": "Absolutely. You can cancel your plan at any moment from your account settings — no questions asked, and no hidden fees." },
-      { "q": "How is ProfitPlanner different from my banking app?", "a": "Banking apps only show one account. ProfitPlanner aggregates all your accounts, investments, and goals into one unified dashboard with smart insights." },
-      { "q": "Do I need a credit card to start?", "a": "No. Our Free plan requires no credit card and gives you full access to the core dashboard forever." },
-      { "q": "Will there be a mobile app?", "a": "Yes — native iOS and Android apps are part of our 2025 roadmap. The web app is fully responsive in the meantime." },
-      { "q": "Will SME and ERP features be included in my plan?", "a": "The upcoming SME Business Planner will be available as a separate Business tier. Existing Pro users will get exclusive launch pricing." }
+      { "q": "Is my financial data safe?", "a": "Your data is stored securely via Supabase with Row-Level Security — only you can access your own records. All connections are SSL-encrypted, and we never share or sell your data." },
+      { "q": "Is this a subscription or a one-time purchase?", "a": "One-time purchase. Pay ฿690 once and get lifetime access — no monthly fees, no auto-renewals. You can also try it free for 7 days before buying." },
+      { "q": "Do I need to connect my bank account?", "a": "No bank connection required. ProfitPlanner uses manual entry — you add your own transactions and stay in full control without linking any external accounts." },
+      { "q": "What can I track?", "a": "Income & expenses, budgets, recurring payments, investments & portfolio, debt & loans, bill splitting with others, and financial simulations — all in one dashboard." },
+      { "q": "Is there a free trial?", "a": "Yes — start a 7-day free trial with no credit card required. You get full access to the dashboard and transactions during the trial period." },
+      { "q": "Will there be a mobile app?", "a": "The web app is fully mobile-responsive and works on any device today. A dedicated iOS/Android app is on our future roadmap." }
     ]
   },
   "newsletter": {

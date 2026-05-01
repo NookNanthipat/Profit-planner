@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Play, Users, Star, Shield } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./admin/EditableText";
@@ -131,20 +131,6 @@ const HeroSection = () => {
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Users size={16} className="text-primary" />
-                <span><EditableText section="hero" fieldKey="users" defaultValue={ds("users", "hero.users")} /></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star size={16} className="text-primary" />
-                <span><EditableText section="hero" fieldKey="rating" defaultValue={ds("rating", "hero.rating")} /></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield size={16} className="text-primary" />
-                <span><EditableText section="hero" fieldKey="uptime" defaultValue={ds("uptime", "hero.uptime")} /></span>
-              </div>
-            </div>
           </motion.div>
 
           <motion.div
