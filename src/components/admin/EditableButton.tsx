@@ -77,8 +77,9 @@ export const EditableButton = ({ section, fieldKey, defaultLabel, defaultHref = 
             updated_at: new Date().toISOString()
           }, { onConflict: 'section,key' })
         ]);
+        window.dispatchEvent(new CustomEvent("pp:content:updated"));
       }
-      
+
       toast({ title: "Button updated" });
       setOpen(false);
     } catch (err: any) {

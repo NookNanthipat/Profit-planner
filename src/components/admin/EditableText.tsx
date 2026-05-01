@@ -75,8 +75,9 @@ export const EditableText = ({ section, fieldKey, defaultValue, className, multi
           updated_at: new Date().toISOString()
         }, { onConflict: 'section,key' });
         if (error) throw error;
+        window.dispatchEvent(new CustomEvent("pp:content:updated"));
       }
-      
+
       refresh();
       setOpen(false);
       toast({ title: "Saved successfully" });

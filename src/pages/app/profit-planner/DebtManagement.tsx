@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Plus, Pencil, Trash2, Loader2,
+  Plus, Pencil, Trash2, Loader2, Users,
   CreditCard, Home, Car, User, Package, ShoppingBag,
   AlertCircle, CheckCircle2, ChevronDown, Calendar as CalendarIcon
 } from "lucide-react";
@@ -310,7 +310,7 @@ function ScheduleModal({ debt, onClose, onPayClick, onRefresh }: { debt: PPDebt;
                   <tbody className="divide-y divide-border/30">
                     {visible.map(row => (
                       <tr key={row.period} className={`transition-colors ${row.status === "paid" ? "bg-emerald-50/10" : row.status === "overdue" ? "bg-rose-50/10" : ""}`}>
-                        <td className="py-2.5 px-3 md:px-4 font-mono font-bold opacity-50">{row.period}</td><td className="py-2.5 px-3 md:px-4 font-bold uppercase tracking-tight">{fmtDate(row.dueDate, i18n)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-black">{formatMoney(row.payment)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-bold text-primary">{formatMoney(row.principal)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-bold text-amber-600">{formatMoney(row.interest)}</td><td className={`py-2.5 px-3 md:px-4 font-mono font-black ${row.balance < 1 ? "text-emerald-600" : "text-rose-500"}`}>{row.balance < 1 ? t("app.debt.cleared").toUpperCase() : formatMoney(row.balance)}</td><td className="py-2.5 px-3 md:px-4">{row.status === "paid" ? <Badge className="bg-emerald-500 text-white px-1.5 h-3.5 text-[8px] font-black">{t("app.debt.repaid").toUpperCase()}</Badge> : row.status === "overdue" ? <Badge className="bg-rose-500 text-white px-1.5 h-3.5 text-[8px] font-black animate-pulse">{t("app.debt.overdue").toUpperCase()}</Badge> : null}</td>
+                        <td className="py-2.5 px-3 md:px-4 font-mono font-bold opacity-50">{row.period}</td><td className="py-2.5 px-3 md:px-4 font-bold uppercase tracking-tight">{fmtDate(row.dueDate, i18n)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-black">{formatMoney(row.payment)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-bold text-primary">{formatMoney(row.principal)}</td><td className="py-2.5 px-3 md:px-4 font-mono font-bold text-amber-600">{formatMoney(row.interest)}</td><td className={`py-2.5 px-3 md:px-4 font-mono font-black ${row.balance < 1 ? "text-emerald-600" : "text-rose-500"}`}>{row.balance < 1 ? t("app.debt.cleared").toUpperCase() : formatMoney(row.balance)}</td><td className="py-2.5 px-3 md:px-4">{row.status === "paid" ? <Badge className="bg-emerald-500 text-white px-1.5 h-3.5 text-[8px] font-black">{t("app.debt.repaid").toUpperCase()}</Badge> : row.status === "overdue" ? <Badge className="bg-rose-500 text-white px-1.5 h-3.5 text-[8px] font-black animate-pulse">{t("app.debt.overdue").toUpperCase()}</Badge> : (() => { const d = new Date(row.dueDate + "T00:00:00"); const now = new Date(); now.setHours(0,0,0,0); const diff = Math.round((d.getTime() - now.getTime()) / 86400000); if (diff === 0) return <Badge className="bg-primary text-white px-1.5 h-3.5 text-[8px] font-black animate-pulse">Due Today</Badge>; if (diff > 0 && diff <= 30) return <Badge className={`text-white px-1.5 h-3.5 text-[8px] font-black ${diff <= 7 ? "bg-amber-500" : "bg-slate-400"}`}>in {diff}d</Badge>; return null; })()}</td>
                       </tr>
                     ))}
                     {debt.remaining_amount <= 0.01 && (<tr><td colSpan={7} className="py-8 text-center bg-emerald-500/5"><div className="flex flex-col items-center gap-2"><div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2"><CheckCircle2 size={20} strokeWidth={3} /></div><p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">{t("app.debt.cleared")}</p></div></td></tr>)}
@@ -366,22 +366,25 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
   const [triedSubmit, setTriedSubmit] = useState(false);
   const [autoRecurring, setAutoRecurring] = useState(true);
   const [isShared, setIsShared] = useState(false);
+  const [splitMode, setSplitMode] = useState<"percent" | "amount">("percent");
   const [persons, setPersons] = useState<PPPerson[]>([]);
   const [splitParticipants, setSplitParticipants] = useState<SplitParticipantConfig[]>([]);
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
 
   useEffect(() => {
-    if (!open) { setTriedSubmit(false); setIsShared(false); setSplitParticipants([]); setAutoRecurring(true); return; }
+    if (!open) { setTriedSubmit(false); setIsShared(false); setSplitParticipants([]); setAutoRecurring(true); setSplitMode("percent"); return; }
     if (item) {
       setF({ name: item.name, type: item.type, lender: item.lender ?? "", account_id: item.account_id ?? "", total_amount: String(item.total_amount), remaining_amount: String(item.remaining_amount), monthly_payment: String(item.monthly_payment), annual_rate: String(item.annual_rate), start_date: item.start_date, due_day: String(item.due_day ?? ""), total_months: String(item.total_months ?? ""), paid_months: String(item.paid_months), note: item.note ?? "", is_active: item.is_active });
       setIsShared(item.is_shared ?? false);
       setSplitParticipants(item.split_config ?? []);
+      setSplitMode(item.split_config?.[0]?.mode ?? "percent");
       setAutoRecurring(false);
     } else {
       setF({ ...BLANK });
       setAutoRecurring(true);
       setIsShared(false);
       setSplitParticipants([]);
+      setSplitMode("percent");
     }
   }, [open, item]);
 
@@ -390,18 +393,32 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
     supabase.from("pp_persons").select("*").eq("user_id", user.id).order("name").then(({ data }) => setPersons((data ?? []) as PPPerson[]));
   }, [isShared, user]);
 
-  const toggleSplitPerson = (personId: string | null) => {
-    const exists = splitParticipants.some(p => p.person_id === personId);
-    if (exists) {
-      setSplitParticipants(splitParticipants.filter(p => p.person_id !== personId));
-    } else {
-      setSplitParticipants([...splitParticipants, { person_id: personId, mode: "percent", value: 50 }]);
+  const handleSharedToggle = (checked: boolean) => {
+    setIsShared(checked);
+    if (checked && splitParticipants.length === 0) {
+      setSplitParticipants([{ person_id: null, mode: "percent", value: 50 }]);
     }
   };
 
-  const updateSplitParticipant = (personId: string | null, field: "mode" | "value", val: any) => {
-    setSplitParticipants(splitParticipants.map(p => p.person_id === personId ? { ...p, [field]: val } : p));
+  const addSplitPart = () => setSplitParticipants(prev => [...prev, { person_id: null, mode: splitMode, value: 0 }]);
+  const removeSplitPart = (i: number) => setSplitParticipants(prev => prev.filter((_, idx) => idx !== i));
+  const updateSplitPart = (i: number, field: keyof SplitParticipantConfig, val: any) => setSplitParticipants(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
+  const equalizeSplit = () => {
+    const count = splitParticipants.length;
+    if (count === 0) return;
+    const monthly = parseFloat(f.monthly_payment) || 0;
+    const target = splitMode === "percent" ? 100 : monthly;
+    const even = +(target / count).toFixed(2);
+    const last = +(target - even * (count - 1)).toFixed(2);
+    setSplitParticipants(splitParticipants.map((p, i) => ({ ...p, mode: splitMode, value: i === count - 1 ? last : even })));
   };
+  const splitStats = useMemo(() => {
+    const monthly = parseFloat(f.monthly_payment) || 0;
+    const target = splitMode === "percent" ? 100 : monthly;
+    const total = splitParticipants.reduce((s, p) => s + (parseFloat(String(p.value)) || 0), 0);
+    const remainder = +(target - total).toFixed(2);
+    return { isValid: Math.abs(remainder) < 0.01, remainder };
+  }, [splitParticipants, splitMode, f.monthly_payment]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!user) return; setTriedSubmit(true);
@@ -409,7 +426,10 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
     if (!f.name || isNaN(total) || isNaN(remaining) || isNaN(monthly)) { toast({ title: t("app.common.error"), variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const row = { user_id: user.id, name: f.name.trim(), type: f.type, lender: f.lender || null, account_id: f.account_id || null, total_amount: total, remaining_amount: remaining, monthly_payment: monthly, annual_rate: parseFloat(f.annual_rate) || 0, start_date: f.start_date, due_day: f.due_day ? parseInt(f.due_day) : null, total_months: f.total_months ? parseInt(f.total_months) : null, paid_months: parseInt(f.paid_months) || 0, note: f.note || null, is_active: f.is_active, is_shared: isShared, split_config: isShared && splitParticipants.length > 0 ? splitParticipants : null };
+      const finalSplitConfig = isShared && splitParticipants.length > 0
+        ? splitParticipants.map(p => ({ ...p, mode: splitMode }))
+        : null;
+      const row = { user_id: user.id, name: f.name.trim(), type: f.type, lender: f.lender || null, account_id: f.account_id || null, total_amount: total, remaining_amount: remaining, monthly_payment: monthly, annual_rate: parseFloat(f.annual_rate) || 0, start_date: f.start_date, due_day: f.due_day ? parseInt(f.due_day) : null, total_months: f.total_months ? parseInt(f.total_months) : null, paid_months: parseInt(f.paid_months) || 0, note: f.note || null, is_active: f.is_active, is_shared: isShared, split_config: finalSplitConfig };
       const { data: newDebt, error } = item
         ? await supabase.from("pp_debts").update(row).eq("id", item.id).select().single()
         : await supabase.from("pp_debts").insert(row).select().single();
@@ -426,8 +446,23 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
         await supabase.from("pp_transactions").insert(inserts);
       }
       if (!item && autoRecurring && row.account_id) {
-        const { data: rec } = await supabase.from("pp_recurring").insert({ user_id: user.id, name: `${row.name} — Monthly`, type: "expense", category_id: catId, account_id: row.account_id, amount: row.monthly_payment, currency: "THB", frequency: "monthly", start_date: row.start_date, end_date: null, is_active: true, note: `Auto: ${row.name}` }).select("id").single();
+        let recurringEndDate: string | null = null;
+        if (row.total_months) {
+          const [sy, sm] = row.start_date.split("-").map(Number);
+          const endD = new Date(sy, sm - 1 + row.total_months - 1, row.due_day || 1);
+          if (row.due_day && endD.getDate() !== row.due_day) endD.setDate(0);
+          recurringEndDate = format(endD, "yyyy-MM-dd");
+        }
+        const { data: rec } = await supabase.from("pp_recurring").insert({ user_id: user.id, name: `${row.name} — Monthly`, type: "expense", category_id: catId, account_id: row.account_id, amount: row.monthly_payment, currency: "THB", frequency: "monthly", start_date: row.start_date, end_date: recurringEndDate, is_active: true, note: `Auto: ${row.name}` }).select("id").single();
         if (rec?.id) await supabase.from("pp_debts").update({ recurring_id: rec.id }).eq("id", newDebt.id);
+        // Create/update budget for current month under debt payment category
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const { data: existingBudget } = await supabase.from("pp_budgets").select("id, planned_amount").eq("user_id", user.id).eq("month", currentMonth).eq("category_id", catId).maybeSingle();
+        if (existingBudget) {
+          await supabase.from("pp_budgets").update({ planned_amount: existingBudget.planned_amount + row.monthly_payment }).eq("id", existingBudget.id);
+        } else {
+          await supabase.from("pp_budgets").insert({ user_id: user.id, month: currentMonth, category_id: catId, planned_amount: row.monthly_payment, currency: "THB", note: `Auto: ${row.name}` });
+        }
       } else if (item && item.recurring_id) {
         await supabase.from("pp_recurring").update({ amount: row.monthly_payment, is_active: row.is_active }).eq("id", item.recurring_id);
       }
@@ -461,33 +496,52 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
               <Switch checked={autoRecurring} onCheckedChange={setAutoRecurring} />
             </div>
           )}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between bg-muted/10 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-border/30">
-              <div><Label className="text-xs font-black uppercase tracking-widest">Shared Debt</Label><p className="text-[9px] text-muted-foreground mt-0.5">Split this loan with others</p></div>
-              <Switch checked={isShared} onCheckedChange={setIsShared} />
+          <div className="pt-2">
+            <div className={cn("flex items-center justify-between p-4 rounded-3xl border transition-all", isShared ? "bg-primary/5 border-primary/20 shadow-inner" : "bg-muted/10 border-border/40")}>
+              <div className="flex items-center gap-3">
+                <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center transition-colors", isShared ? "bg-primary text-white" : "bg-primary/10 text-primary")}><Users size={20} /></div>
+                <div><p className="text-xs font-black uppercase tracking-tight">Shared Debt</p><p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Split this loan with others</p></div>
+              </div>
+              <Switch checked={isShared} onCheckedChange={handleSharedToggle} />
             </div>
             {isShared && (
-              <div className="space-y-2 px-1">
-                {[{ id: null as string | null, name: "Me (Self)" }, ...persons].map((p) => {
-                  const pid = p.id ?? null;
-                  const current = splitParticipants.find(sp => sp.person_id === pid);
-                  return (
-                    <div key={String(pid)} className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${current ? "border-primary/30 bg-primary/5" : "border-border/30 bg-muted/5"}`}>
-                      <button type="button" onClick={() => toggleSplitPerson(pid)} className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors text-[8px] font-black ${current ? "bg-primary border-primary text-white" : "border-muted-foreground/40"}`}>{current && "✓"}</button>
-                      <span className="text-[11px] font-bold flex-1 truncate">{p.name}</span>
-                      {current && (
-                        <>
-                          <Select value={current.mode} onValueChange={v => updateSplitParticipant(pid, "mode", v)}>
-                            <SelectTrigger className="h-7 w-16 rounded-lg text-[9px] font-bold border-none bg-muted/20"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="amount">฿</SelectItem></SelectContent>
-                          </Select>
-                          <Input type="number" value={current.value} onChange={e => updateSplitParticipant(pid, "value", parseFloat(e.target.value) || 0)} className="h-7 w-16 rounded-lg text-[9px] font-bold text-right border-none bg-muted/20 px-2" />
-                        </>
-                      )}
+              <div className="mt-3 p-4 bg-muted/5 rounded-3xl border border-dashed border-primary/20 space-y-4 animate-in zoom-in-95 duration-300">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex flex-col">
+                    <Label className="text-[9px] font-black uppercase text-muted-foreground opacity-60">Split Distribution</Label>
+                    <p className={cn("text-[10px] font-black uppercase mt-0.5", splitStats.isValid ? "text-emerald-600" : "text-rose-500")}>
+                      {splitStats.isValid
+                        ? <span className="flex items-center gap-1"><CheckCircle2 size={10} /> Fully Allocated</span>
+                        : <span className="flex items-center gap-1"><AlertCircle size={10} /> Remainder: {splitStats.remainder.toFixed(2)}{splitMode === "percent" ? "%" : ""}</span>}
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5 items-center">
+                    <div className="flex p-0.5 bg-muted/20 rounded-lg border border-border/40">
+                      <button type="button" onClick={() => { setSplitMode("percent"); setSplitParticipants(p => p.map(sp => ({ ...sp, mode: "percent" }))); }} className={cn("px-2.5 py-1 rounded-md text-[8px] font-black uppercase transition-all", splitMode === "percent" ? "bg-primary text-white shadow-md" : "text-muted-foreground hover:bg-muted/50")}>%</button>
+                      <button type="button" onClick={() => { setSplitMode("amount"); setSplitParticipants(p => p.map(sp => ({ ...sp, mode: "amount" }))); }} className={cn("px-2.5 py-1 rounded-md text-[8px] font-black uppercase transition-all", splitMode === "amount" ? "bg-primary text-white shadow-md" : "text-muted-foreground hover:bg-muted/50")}>฿</button>
                     </div>
-                  );
-                })}
-                {persons.length === 0 && <p className="text-[9px] text-muted-foreground pl-1 italic">Add people in the Splits section to enable sharing.</p>}
+                    <Button type="button" variant="ghost" size="sm" onClick={equalizeSplit} className="h-7 px-2 text-[8px] font-black uppercase text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/10">Equal</Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={addSplitPart} className="h-7 px-2 text-[8px] font-black uppercase text-primary border border-primary/20">+ Add</Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {splitParticipants.map((p, i) => (
+                    <div key={i} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2 duration-300">
+                      <Select value={p.person_id ?? "self"} onValueChange={v => updateSplitPart(i, "person_id", v === "self" ? null : v)}>
+                        <SelectTrigger className="h-9 rounded-xl bg-background border-none shadow-sm text-[10px] font-black flex-1"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="self">Me (Self)</SelectItem>
+                          {persons.map(pe => <SelectItem key={pe.id} value={pe.id}>{pe.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <div className="w-24 relative">
+                        <Input type="number" step="0.01" value={p.value} onChange={e => updateSplitPart(i, "value", parseFloat(e.target.value) || 0)} className="h-9 rounded-xl bg-background border-none shadow-sm font-black text-[10px] pr-6" />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black opacity-40">{splitMode === "percent" ? "%" : ""}</span>
+                      </div>
+                      {splitParticipants.length > 1 && <Button size="icon" type="button" variant="ghost" className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 rounded-xl" onClick={() => removeSplitPart(i)}><Trash2 size={14} /></Button>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

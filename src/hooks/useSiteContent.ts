@@ -57,6 +57,13 @@ export function useSiteContent(section: string) {
     load();
   }, [load, version]);
 
+  // Refresh whenever any editable content is saved anywhere on the page
+  useEffect(() => {
+    const handleContentUpdate = () => setVersion(v => v + 1);
+    window.addEventListener("pp:content:updated", handleContentUpdate);
+    return () => window.removeEventListener("pp:content:updated", handleContentUpdate);
+  }, []);
+
   const refresh = () => setVersion(v => v + 1);
 
   const ds = (key: string, defaultPath: string, fallback: string = ""): string => {
