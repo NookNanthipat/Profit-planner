@@ -48,20 +48,18 @@ export const EditableButton = ({ section, fieldKey, defaultLabel, defaultHref = 
       const activeLang = previewLanguage.split('-')[0];
       
       if (section === "products") {
-        const [id] = fieldKey.split("_");
-        // For products, label can update name or a specific badge/label col
-        // href can update app_route or slug
+        const separatorIdx = fieldKey.lastIndexOf("_");
+        const id = fieldKey.substring(0, separatorIdx);
         const labelCol = targetCols?.label || (activeLang === "th" ? "name_th" : "name");
         const hrefCol = targetCols?.href || "app_route";
-        
-        const updateObj: any = {
-          updated_at: new Date().toISOString()
-        };
+
+        const updateObj: any = { updated_at: new Date().toISOString() };
         if (labelCol) updateObj[labelCol] = label;
         if (hrefCol) updateObj[hrefCol] = href;
 
         const { error } = await supabase.from("products").update(updateObj).eq("id", id);
         if (error) throw error;
+        window.dispatchEvent(new CustomEvent("pp:products:updated"));
       } else {
         const labelField = activeLang === "th" ? "value_th" : "value_en";
         await Promise.all([

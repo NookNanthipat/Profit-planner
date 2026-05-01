@@ -97,7 +97,7 @@ const PortalPage = () => {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    
+
     const load = async () => {
       try {
         const [productsRes, upRes] = await Promise.all([
@@ -111,7 +111,7 @@ const PortalPage = () => {
         if (upRes.error) throw upRes.error;
 
         setProducts((productsRes.data as Product[]) || []);
-        
+
         const map: EntitlementMap = {};
         if (upRes.data) {
           (upRes.data as UserProduct[]).forEach((e) => (map[e.product_id] = e));
@@ -126,7 +126,13 @@ const PortalPage = () => {
     };
 
     load();
-    return () => { cancelled = true; };
+
+    // Re-fetch when admin saves a product via EditableText/EditableButton
+    window.addEventListener("pp:products:updated", load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pp:products:updated", load);
+    };
   }, [user]);
 
   if (error) {

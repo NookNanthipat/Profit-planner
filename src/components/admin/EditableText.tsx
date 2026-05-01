@@ -46,10 +46,12 @@ export const EditableText = ({ section, fieldKey, defaultValue, className, multi
       let valToSave: any = tempValue;
 
       if (section === "products") {
-        const [id, col] = fieldKey.split("_");
+        const separatorIdx = fieldKey.lastIndexOf("_");
+        const id = fieldKey.substring(0, separatorIdx);
+        const col = fieldKey.substring(separatorIdx + 1);
         if (!id || !col) throw new Error("Invalid fieldKey for products section");
         const columnName = activeLang === "th" ? `${col}_th` : col;
-        
+
         const updateData: any = {
           updated_at: new Date().toISOString()
         };
@@ -62,6 +64,8 @@ export const EditableText = ({ section, fieldKey, defaultValue, className, multi
 
         const { error } = await supabase.from("products").update(updateData).eq("id", id);
         if (error) throw error;
+        // Notify Portal to re-fetch product list
+        window.dispatchEvent(new CustomEvent("pp:products:updated"));
       } else {
         const fieldName = activeLang === "th" ? "value_th" : "value_en";
         const { error } = await supabase.from("pp_site_content").upsert({
