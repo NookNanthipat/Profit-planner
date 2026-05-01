@@ -157,8 +157,8 @@ const AdminSettings = () => {
           <div className="h-6 w-px bg-border/60" />
 
           <div className="flex bg-muted/20 p-1 rounded-xl border border-border/40 scale-90">
-             <Button variant={previewLanguage === "en" ? "secondary" : "ghost"} size="sm" className="h-7 rounded-lg px-3 font-black text-[9px] uppercase" onClick={() => setPreviewLanguage("en")}>EN</Button>
-             <Button variant={previewLanguage === "th" ? "secondary" : "ghost"} size="sm" className="h-7 rounded-lg px-3 font-black text-[9px] uppercase" onClick={() => setPreviewLanguage("th")}>TH</Button>
+             <Button variant={previewLanguage === "en" ? "secondary" : "ghost"} size="sm" className="h-7 rounded-lg px-3 font-black text-[9px] uppercase" onClick={() => i18n.changeLanguage("en")}>EN</Button>
+             <Button variant={previewLanguage === "th" ? "secondary" : "ghost"} size="sm" className="h-7 rounded-lg px-3 font-black text-[9px] uppercase" onClick={() => i18n.changeLanguage("th")}>TH</Button>
           </div>
 
           <div className="flex bg-muted/20 p-1 rounded-xl border border-border/40 scale-90">

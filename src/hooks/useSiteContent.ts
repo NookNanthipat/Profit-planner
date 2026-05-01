@@ -13,10 +13,16 @@ export function useSiteContent(section: string) {
   const [isReady, setIsReady] = useState(false);
   const lang = i18n?.language || 'en';
 
+  // Reset overrides immediately when language changes so i18n fallbacks render
+  // right away instead of waiting for the async DB reload to complete.
+  useEffect(() => {
+    setOverrides({});
+  }, [lang]);
+
   const load = useCallback(async () => {
     // If i18n is not initialized or we don't have a lang yet, don't load
     if (!i18n.isInitialized) return;
-    
+
     try {
       const { data, error } = await supabase
         .from("pp_site_content")
@@ -28,9 +34,12 @@ export function useSiteContent(section: string) {
       if (data) {
         const map: ContentMap = {};
         const activeLang = lang.split('-')[0];
-        
+
         data.forEach((item) => {
           const val = activeLang === "th" ? item.value_th : item.value_en;
+          // Skip value_th if it is identical to value_en — indicates the slot was
+          // never intentionally translated and may contain corrupt English content.
+          if (activeLang === "th" && item.value_th === item.value_en) return;
           if (typeof val === 'string' && val.trim().length > 0) {
             map[item.key] = val;
           }
