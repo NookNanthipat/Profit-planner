@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Plus, Pencil, Trash2, Zap, TrendingUp, TrendingDown,
-  ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Loader2, Calendar as CalendarIcon, AlertCircle, RefreshCw
+  ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Loader2, Calendar as CalendarIcon, AlertCircle, RefreshCw, X
 } from "lucide-react";
 import { format, addDays, addWeeks, addMonths, addYears, isBefore, isSameDay } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -192,6 +192,7 @@ function RecurringForm({ open, onOpenChange, item, accounts, categories, onSaved
   };
 
   const startDateObj = useMemo(() => f.start_date ? new Date(f.start_date + "T00:00:00") : undefined, [f.start_date]);
+  const endDateObj = useMemo(() => f.end_date ? new Date(f.end_date + "T00:00:00") : undefined, [f.end_date]);
   const FREQUENCIES: RecurringFrequency[] = ["daily", "weekly", "biweekly", "monthly", "quarterly", "biannual", "yearly"];
 
   return (
@@ -215,6 +216,27 @@ function RecurringForm({ open, onOpenChange, item, accounts, categories, onSaved
                   <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl" align="start"><Calendar mode="single" selected={startDateObj} onSelect={(d) => d && set("start_date", format(d, "yyyy-MM-dd"))} initialFocus className="rounded-2xl" /></PopoverContent>
                 </Popover>
              </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">End Date <span className="opacity-50">(Optional)</span></Label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 h-11 justify-start text-left font-bold rounded-xl bg-muted/20 border-none shadow-inner px-3">
+                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                    {endDateObj ? format(endDateObj, "PPP") : <span className="text-muted-foreground font-normal">{t("app.common.date")}</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl" align="start">
+                  <Calendar mode="single" selected={endDateObj} onSelect={(d) => d && set("end_date", format(d, "yyyy-MM-dd"))} initialFocus className="rounded-2xl" />
+                </PopoverContent>
+              </Popover>
+              {f.end_date && (
+                <Button type="button" variant="ghost" size="icon" className="h-11 w-11 rounded-xl text-muted-foreground hover:text-rose-500 shrink-0" onClick={() => set("end_date", "")}>
+                  <X size={14} />
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5"><Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">{t("app.common.category")}</Label><Select value={f.category_id} onValueChange={(v) => set("category_id", v)}><SelectTrigger className="h-11 rounded-xl bg-muted/20 border-none shadow-inner font-bold"><SelectValue placeholder={t("app.common.all")} /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="none">{t("app.common.all")}</SelectItem>{filteredCats.map(c => (<SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>))}</SelectContent></Select></div>
           <div className="space-y-1.5"><Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">{t("app.common.account")}</Label><Select value={f.account_id} onValueChange={(v) => set("account_id", v)}><SelectTrigger className="h-11 rounded-xl bg-muted/20 border-none shadow-inner font-bold"><SelectValue placeholder={t("app.common.all")} /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="none">{t("app.common.all")}</SelectItem>{accounts.map(a => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}</SelectContent></Select></div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ChevronLeft, ChevronRight, Copy, Loader2,
+  ChevronLeft, ChevronRight, Copy, Loader2, Trash2,
   TrendingDown, TrendingUp, Wallet, AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -211,7 +211,7 @@ function QuickAdd({ categories, budgetedIds, month, onSaved }: QuickAddProps) {
 }
 
 // ─── Budget Row ───────────────────────────────────────────────────────────────
-function BudgetRow({ row, onEdit }: { row: PPBudgetSummaryRow; onEdit: () => void }) {
+function BudgetRow({ row, onEdit, onDelete }: { row: PPBudgetSummaryRow; onEdit: () => void; onDelete?: () => void }) {
   const { t } = useTranslation();
   const pct = row.planned_amount > 0
     ? Math.min(Math.round((row.actual_amount / row.planned_amount) * 100), 999)
@@ -261,6 +261,14 @@ function BudgetRow({ row, onEdit }: { row: PPBudgetSummaryRow; onEdit: () => voi
         <span className={`text-[10px] font-black w-10 text-right shrink-0 tabular-nums ${over ? "text-rose-600" : warn ? "text-amber-600" : "text-slate-500"}`}>
           {pct}%
         </span>
+      )}
+      {onDelete && row.planned_amount > 0 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center shrink-0"
+        >
+          <Trash2 size={11} />
+        </button>
       )}
     </div>
   );
@@ -399,6 +407,20 @@ const Budget = () => {
     }
   };
 
+  const handleDeleteBudget = async (row: PPBudgetSummaryRow) => {
+    if (!user || !row.category_id) return;
+    if (!confirm(t("app.common.confirm"))) return;
+    try {
+      const { error } = await supabase.from("pp_budgets").delete()
+        .eq("user_id", user.id).eq("month", month).eq("category_id", row.category_id);
+      if (error) throw error;
+      toast({ title: t("app.common.success") });
+      load();
+    } catch (e: any) {
+      toast({ title: t("app.common.error"), description: e.message, variant: "destructive" });
+    }
+  };
+
   const budgetedIds = useMemo(() => new Set(rows.filter((r) => r.planned_amount > 0).map((r) => r.category_id)), [rows]);
   const expenseRows = rows.filter((r) => r.category_type === "expense");
   const incomeRows  = rows.filter((r) => r.category_type === "income");
@@ -455,7 +477,7 @@ const Budget = () => {
                 ) : (
                   <div className="divide-y divide-border/20">
                     {expenseRows.map((r, i) => (
-                      <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} />
+                      <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} onDelete={() => handleDeleteBudget(r)} />
                     ))}
                   </div>
                 )}
@@ -468,7 +490,7 @@ const Budget = () => {
                   </h3>
                   <div className="divide-y divide-border/20">
                     {incomeRows.map((r, i) => (
-                      <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} />
+                      <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} onDelete={() => handleDeleteBudget(r)} />
                     ))}
                   </div>
                 </Card>

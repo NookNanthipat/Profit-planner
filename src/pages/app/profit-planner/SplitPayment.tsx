@@ -239,7 +239,10 @@ const SplitPayment = () => {
   useEffect(() => { load(); }, [user]);
 
   const filteredSplits = useMemo(() => {
-    return splits.filter(s => s.transaction?.occurred_on?.startsWith(month));
+    return splits.filter(s => {
+      if (s.transaction?.occurred_on) return s.transaction.occurred_on.startsWith(month);
+      return s.due_date?.startsWith(month); // pending splits without transaction yet
+    });
   }, [splits, month]);
 
   const stats = useMemo(() => {
@@ -356,8 +359,13 @@ const SplitPayment = () => {
                       <div className="flex gap-3 lg:gap-4 min-w-0 flex-1">
                         <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-xl lg:rounded-[24px] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0"><Receipt size={20} className="lg:w-6 lg:h-6" /></div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1"><h3 className="font-black text-xs lg:text-sm uppercase tracking-tight truncate">{s.transaction?.note || 'Unnamed Bill'}</h3><Badge variant="secondary" className="text-[7px] lg:text-[8px] font-black uppercase py-0 px-1.5">{s.transaction?.occurred_on}</Badge></div>
-                          <div className="flex flex-wrap items-center gap-2 lg:gap-4 mt-1"><p className="text-[8px] lg:text-[9px] font-bold text-muted-foreground uppercase opacity-60">Total: {formatMoney(Number(s.transaction?.amount || 0))} • Owed: {formatMoney(s.total_owed || 0)}</p><Badge variant="outline" className="text-[7px] lg:text-[8px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5 px-1.5">{progress.toFixed(0)}% Collected</Badge></div>
+                          <div className="flex items-center gap-2 mb-1"><h3 className="font-black text-xs lg:text-sm uppercase tracking-tight truncate">{s.transaction?.note || s.note || 'Unnamed Bill'}</h3>
+                            {s.transaction?.occurred_on
+                              ? <Badge variant="secondary" className="text-[7px] lg:text-[8px] font-black uppercase py-0 px-1.5">{s.transaction.occurred_on}</Badge>
+                              : <Badge className="text-[7px] lg:text-[8px] font-black uppercase py-0 px-1.5 bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse">PENDING • {s.due_date}</Badge>
+                            }
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 lg:gap-4 mt-1"><p className="text-[8px] lg:text-[9px] font-bold text-muted-foreground uppercase opacity-60">Total: {formatMoney(Number(s.transaction?.amount || s.total_owed || 0))} • Owed: {formatMoney(s.total_owed || 0)}</p><Badge variant="outline" className="text-[7px] lg:text-[8px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5 px-1.5">{progress.toFixed(0)}% Collected</Badge></div>
                           <div className="mt-4 flex flex-wrap gap-2">
                             {(s.participants ?? []).filter((p: any) => p.person_id !== null).map((p: any, i: number) => {
                               const isPaid = (p.paid_total || 0) >= (p.actual_amount || 0) - 0.1;

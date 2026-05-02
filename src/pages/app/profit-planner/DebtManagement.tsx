@@ -127,20 +127,23 @@ function buildSchedule(debt: PPDebt, history: PPTransaction[] = [], max = 360): 
   const [sy, sm] = start_date.split("-").map(Number);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const rows: AmortRow[] = [];
-  
+  // Use whichever is higher: actual transaction count or paid_months recorded on the debt
+  // This allows manual-pay debts (no transactions) to show correct paid status
+  const paidUpTo = Math.max(history.length, debt.paid_months ?? 0);
+
   for (let p = 1; p <= max; p++) {
     const interest  = r > 0 ? balance * r : 0;
     const principal = Math.min(monthly_payment - interest, balance);
     const targetMonthIndex = sm - 1 + (p - 1);
-    
+
     const dd = new Date(sy, targetMonthIndex, due_day || 1);
     const intendedMonth = (targetMonthIndex % 12 + 12) % 12;
     if (dd.getMonth() !== intendedMonth) dd.setDate(0);
-    
+
     const dueDate = format(dd, "yyyy-MM-dd");
-    
+
     let status: PeriodStatus;
-    if (p <= history.length) status = "paid";
+    if (p <= paidUpTo) status = "paid";
     else if (dd < today) status = "overdue";
     else status = "future";
 
@@ -162,33 +165,53 @@ function buildSchedule(debt: PPDebt, history: PPTransaction[] = [], max = 360): 
 }
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
-function PayModal({ debt, rows, onClose, onPaid }: { debt: PPDebt; rows: AmortRow[]; onClose: () => void; onPaid: () => void; }) {
+function PayModal({ debt, rows, accounts, onClose, onPaid }: { debt: PPDebt; rows: AmortRow[]; accounts: PPAccount[]; onClose: () => void; onPaid: () => void; }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth(); const { toast } = useToast(); const [saving, setSaving] = useState(false); const dt = DEBT_TYPES.find(t => t.key === debt.type)!;
   const actionable = useMemo(() => { const overdue = rows.filter(r => r.status === "overdue"); const next = rows.find(r => r.status === "future"); return next ? [...overdue, next] : overdue; }, [rows]);
   const [selectedPeriod, setSelectedPeriod] = useState<number>(actionable[0]?.period ?? rows.find(r => r.status !== "paid")?.period ?? 1);
   const selectedRow = rows.find(r => r.period === selectedPeriod);
   const [customAmount, setCustomAmount] = useState<string>("");
+  const [payAccountId, setPayAccountId] = useState<string>(
+    debt.account_id || (accounts.length > 0 ? accounts[0].id : "")
+  );
   const payAmount = parseFloat(customAmount) || selectedRow?.payment || 0;
   const extraPrincipal = selectedRow ? Math.max(0, payAmount - selectedRow.payment) : 0;
   const handlePay = async () => {
-    if (!user || !selectedRow || !debt.account_id) return; setSaving(true);
+    if (!user || !selectedRow) return; setSaving(true);
     try {
       const catId = await ensureDebtSubCategory(user.id, debt.name);
       const principalPaid = selectedRow.principal + extraPrincipal;
-      const { data: tx, error: txErr } = await supabase.from("pp_transactions").insert({ user_id: user.id, account_id: debt.account_id, category_id: catId, debt_id: debt.id, type: "expense", amount: payAmount, occurred_on: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}${extraPrincipal > 0 ? ` (+${formatMoney(extraPrincipal)})` : ""}` }).select("id").single();
-      if (txErr) throw txErr;
-      if (debt.is_shared && debt.split_config?.length && tx?.id) {
-        const { data: split } = await supabase.from("pp_splits").insert({ user_id: user.id, transaction_id: tx.id, due_date: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}` }).select("id").single();
-        if (split?.id) {
-          await supabase.from("pp_split_participants").insert(
-            debt.split_config.map((p) => ({ split_id: split.id, person_id: p.person_id, mode: p.mode, value: p.value, actual_amount: p.mode === "percent" ? Math.round(payAmount * p.value) / 100 : p.value }))
-          );
-        }
+      let txId: string | null = null;
+      if (payAccountId) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        const { data: tx, error: txErr } = await supabase.from("pp_transactions").insert({ user_id: user.id, account_id: payAccountId, category_id: catId, debt_id: debt.id, type: "expense", amount: payAmount, occurred_on: today, note: `${debt.name} — Period ${selectedRow.period}${extraPrincipal > 0 ? ` (+${formatMoney(extraPrincipal)})` : ""}` }).select("id").single();
+        if (txErr) throw txErr;
+        txId = tx?.id ?? null;
+      }
+      if (debt.is_shared && debt.split_config?.length) {
+        try {
+          const { data: pendingSplit } = await supabase.from("pp_splits")
+            .select("id").eq("debt_id", debt.id).eq("period_number", selectedRow.period).is("transaction_id", null).maybeSingle();
+          if (pendingSplit?.id) {
+            await supabase.from("pp_splits").update({ transaction_id: txId }).eq("id", pendingSplit.id);
+          } else if (txId) {
+            const { data: split } = await supabase.from("pp_splits").insert({
+              user_id: user.id, transaction_id: txId, debt_id: debt.id, period_number: selectedRow.period,
+              due_date: selectedRow.dueDate, note: `${debt.name} — Period ${selectedRow.period}`
+            }).select("id").single();
+            if (split?.id) {
+              await supabase.from("pp_split_participants").insert(
+                debt.split_config.map((p) => ({ split_id: split.id, person_id: p.person_id, mode: p.mode, value: p.value, actual_amount: p.mode === "percent" ? Math.round(payAmount * p.value) / 100 : p.value }))
+              );
+            }
+          }
+        } catch { /* split tracking is non-fatal */ }
       }
       const newRemaining = Math.max(0, debt.remaining_amount - principalPaid);
       await supabase.from("pp_debts").update({ paid_months: debt.paid_months + 1, remaining_amount: newRemaining, is_active: newRemaining > 0.01 }).eq("id", debt.id);
-      if (newRemaining <= 0.01) fireCelebration(); toast({ title: t("app.common.success") }); onPaid(); onClose();
+      if (newRemaining <= 0.01) fireCelebration();
+      toast({ title: t("app.common.success") }); onPaid(); onClose();
     } catch (e: any) { toast({ title: t("app.common.error"), description: e.message, variant: "destructive" }); } finally { setSaving(false); }
   };
   return (
@@ -208,8 +231,25 @@ function PayModal({ debt, rows, onClose, onPaid }: { debt: PPDebt; rows: AmortRo
             </div>
           )}
           <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("app.common.amount")}</Label><Input type="number" step="0.01" value={customAmount} placeholder={String(selectedRow?.payment ?? "")} onChange={e => setCustomAmount(e.target.value)} className="rounded-xl h-10 font-bold" /></div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("app.common.account")}</Label>
+            {accounts.length === 0 ? (
+              <div className="bg-rose-500/10 text-rose-600 text-[9px] font-bold p-3 rounded-xl border border-rose-500/20">
+                No accounts set up — payment progress will be saved but no transaction record will be created. Add an account first to enable transaction tracking.
+              </div>
+            ) : (
+              <Select value={payAccountId || "none"} onValueChange={v => setPayAccountId(v === "none" ? "" : v)}>
+                <SelectTrigger className="rounded-xl h-10"><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="none">No account (no transaction record)</SelectItem>
+                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {accounts.length > 0 && !payAccountId && <p className="text-[9px] text-amber-600 font-bold mt-1">Without an account, no transaction record will be created.</p>}
+          </div>
         </div>
-        <DialogFooter className="gap-2"><Button variant="ghost" onClick={onClose} className="rounded-xl font-bold uppercase text-[10px]">{t("app.common.cancel")}</Button><Button onClick={handlePay} disabled={saving || !debt.account_id || !selectedRow} className="rounded-xl font-black uppercase text-[10px] px-6" style={{ backgroundColor: dt.color, border: "none" }}>{t("app.common.confirm")}</Button></DialogFooter>
+        <DialogFooter className="gap-2"><Button variant="ghost" onClick={onClose} className="rounded-xl font-bold uppercase text-[10px]">{t("app.common.cancel")}</Button><Button onClick={handlePay} disabled={saving || !selectedRow} className="rounded-xl font-black uppercase text-[10px] px-6" style={{ backgroundColor: dt.color, border: "none" }}>{t("app.common.confirm")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -390,7 +430,7 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
 
   useEffect(() => {
     if (!isShared || !user) return;
-    supabase.from("pp_persons").select("*").eq("user_id", user.id).order("name").then(({ data }) => setPersons((data ?? []) as PPPerson[]));
+    supabase.from("pp_people").select("*").eq("user_id", user.id).order("name").then(({ data }) => setPersons((data ?? []) as PPPerson[]));
   }, [isShared, user]);
 
   const handleSharedToggle = (checked: boolean) => {
@@ -445,7 +485,7 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
         }
         await supabase.from("pp_transactions").insert(inserts);
       }
-      if (!item && autoRecurring && row.account_id) {
+      if (!item && autoRecurring) {
         let recurringEndDate: string | null = null;
         if (row.total_months) {
           const [sy, sm] = row.start_date.split("-").map(Number);
@@ -453,18 +493,23 @@ function DebtForm({ open, onOpenChange, item, accounts, onSaved }: { open: boole
           if (row.due_day && endD.getDate() !== row.due_day) endD.setDate(0);
           recurringEndDate = format(endD, "yyyy-MM-dd");
         }
-        const { data: rec } = await supabase.from("pp_recurring").insert({ user_id: user.id, name: `${row.name} — Monthly`, type: "expense", category_id: catId, account_id: row.account_id, amount: row.monthly_payment, currency: "THB", frequency: "monthly", start_date: row.start_date, end_date: recurringEndDate, is_active: true, note: `Auto: ${row.name}` }).select("id").single();
-        if (rec?.id) await supabase.from("pp_debts").update({ recurring_id: rec.id }).eq("id", newDebt.id);
-        // Create/update budget for current month under debt payment category
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const { data: existingBudget } = await supabase.from("pp_budgets").select("id, planned_amount").eq("user_id", user.id).eq("month", currentMonth).eq("category_id", catId).maybeSingle();
-        if (existingBudget) {
-          await supabase.from("pp_budgets").update({ planned_amount: existingBudget.planned_amount + row.monthly_payment }).eq("id", existingBudget.id);
-        } else {
-          await supabase.from("pp_budgets").insert({ user_id: user.id, month: currentMonth, category_id: catId, planned_amount: row.monthly_payment, currency: "THB", note: `Auto: ${row.name}` });
+        const { data: rec, error: recErr } = await supabase.from("pp_recurring").insert({ user_id: user.id, name: `${row.name} — Monthly`, type: "expense", category_id: catId, account_id: row.account_id || null, amount: row.monthly_payment, currency: "THB", frequency: "monthly", start_date: row.start_date, end_date: recurringEndDate, is_active: true, note: `Auto: ${row.name}` }).select("id").single();
+        if (recErr) {
+          toast({ title: "Auto-Recurring failed", description: recErr.message, variant: "destructive" });
+        } else if (rec?.id) {
+          await supabase.from("pp_debts").update({ recurring_id: rec.id }).eq("id", newDebt.id);
         }
       } else if (item && item.recurring_id) {
         await supabase.from("pp_recurring").update({ amount: row.monthly_payment, is_active: row.is_active }).eq("id", item.recurring_id);
+      }
+      if (!item) {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const { data: existingBudget } = await supabase.from("pp_budgets").select("id, planned_amount").eq("user_id", user.id).eq("month", currentMonth).eq("category_id", catId).maybeSingle();
+        if (existingBudget) {
+          await supabase.from("pp_budgets").update({ planned_amount: row.monthly_payment }).eq("id", existingBudget.id);
+        } else {
+          await supabase.from("pp_budgets").insert({ user_id: user.id, month: currentMonth, category_id: catId, planned_amount: row.monthly_payment, currency: "THB", note: `Auto: ${row.name}` });
+        }
       }
       toast({ title: t("app.common.success") }); onSaved(); onOpenChange(false);
     } catch (e: any) { toast({ title: t("app.common.error"), description: e.message, variant: "destructive" }); } finally { setSaving(false); }
@@ -607,20 +652,61 @@ const DebtManagement = () => {
   const [filterType, setFilterType] = useState<"all"|DebtType>("all"); 
   const [showInactive, setShowInactive] = useState(false);
   
-  const load = async () => { 
-    if (!user) return; 
-    setLoading(true); 
-    const [{ data: d }, { data: a }, { data: h }] = await Promise.all([ 
-      supabase.from("pp_debts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }), 
+  const autoCreatePendingSplits = async (debtList: PPDebt[]) => {
+    if (!user) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const sharedDebts = debtList.filter(d => d.is_active && d.is_shared && d.split_config?.length);
+    if (!sharedDebts.length) return;
+    for (const debt of sharedDebts) {
+      const schedule = buildSchedule(debt);
+      const dueRows = schedule.filter(r => {
+        const d = new Date(r.dueDate + "T00:00:00"); d.setHours(0, 0, 0, 0);
+        return d <= today && r.period > debt.paid_months;
+      });
+      if (!dueRows.length) continue;
+      const { data: existingSplits } = await supabase.from("pp_splits").select("period_number").eq("debt_id", debt.id);
+      const existingPeriods = new Set((existingSplits ?? []).map((s: any) => Number(s.period_number)));
+      const catId = await ensureDebtSubCategory(user.id, debt.name);
+      for (const row of dueRows) {
+        if (existingPeriods.has(row.period)) continue;
+        const { data: split } = await supabase.from("pp_splits").insert({
+          user_id: user.id, debt_id: debt.id, period_number: row.period,
+          due_date: row.dueDate, note: `${debt.name} — Period ${row.period}`
+        }).select("id").single();
+        if (split?.id) {
+          await supabase.from("pp_split_participants").insert(
+            debt.split_config!.map((p) => ({
+              split_id: split.id, person_id: p.person_id, mode: p.mode, value: p.value,
+              actual_amount: p.mode === "percent" ? Math.round(row.payment * p.value) / 100 : p.value
+            }))
+          );
+        }
+        // Ensure budget for this period's month
+        const periodMonth = row.dueDate.slice(0, 7);
+        const { data: existingBudget } = await supabase.from("pp_budgets").select("id").eq("user_id", user.id).eq("month", periodMonth).eq("category_id", catId).maybeSingle();
+        if (!existingBudget) {
+          await supabase.from("pp_budgets").insert({ user_id: user.id, month: periodMonth, category_id: catId, planned_amount: debt.monthly_payment, currency: "THB", note: `Auto: ${debt.name}` });
+        }
+      }
+    }
+  };
+
+  const load = async () => {
+    if (!user) return;
+    setLoading(true);
+    const [{ data: d }, { data: a }, { data: h }] = await Promise.all([
+      supabase.from("pp_debts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("pp_accounts").select("*").eq("user_id", user.id).order("name"),
       supabase.from("pp_transactions").select("*").eq("user_id", user.id).not("debt_id", "is", null)
-    ]); 
-    setDebts((d ?? []) as PPDebt[]); 
-    setAccounts((a ?? []) as PPAccount[]); 
+    ]);
+    const debtList = (d ?? []) as PPDebt[];
+    setDebts(debtList);
+    setAccounts((a ?? []) as PPAccount[]);
     setAllHistory((h ?? []) as PPTransaction[]);
-    setLoading(false); 
+    setLoading(false);
+    autoCreatePendingSplits(debtList);
   };
-  
+
   useEffect(() => { load(); }, [user]);
 
   const handleDelete = async (id: string) => {
@@ -666,7 +752,7 @@ const DebtManagement = () => {
       )}
       <DebtForm open={formOpen} onOpenChange={setFormOpen} item={editItem} accounts={accounts} onSaved={load} />
       {scheduleDebt && <ScheduleModal debt={scheduleDebt} onClose={() => setScheduleDebt(null)} onPayClick={() => { setPayDebt(scheduleDebt); setScheduleDebt(null); }} onRefresh={load} />}
-      {payDebt && <PayModal debt={payDebt} rows={buildSchedule(payDebt, allHistory.filter(h => h.debt_id === payDebt.id))} onClose={() => setPayDebt(null)} onPaid={load} />}
+      {payDebt && <PayModal debt={payDebt} rows={buildSchedule(payDebt, allHistory.filter(h => h.debt_id === payDebt.id))} accounts={accounts} onClose={() => setPayDebt(null)} onPaid={load} />}
     </div>
   );
 };
