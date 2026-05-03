@@ -66,18 +66,29 @@ function calcCompound(plan: any) {
     let balance = p;
     let totalContrib = p;
     let totalInterest = 0;
-    const rows = [];
+    const rows: any[] = [];
 
     rows.push({ year: 0, startBalance: p, contribution: 0, interest: 0, endBalance: p, totalContrib: p, totalInterest: 0 });
 
     for (let y = 1; y <= totalYears; y++) {
       const startBalance = balance;
-      const currentYearContrib = (add * factor) * Math.pow(1 + inc, y - 1);
-      const endWithCompound = balance * Math.pow(1 + r / n, n);
-      const contribInterest = currentYearContrib * Math.pow(1 + r / n, n / 2);
-      const interest = endWithCompound - balance + (contribInterest - currentYearContrib);
-      
-      balance = endWithCompound + contribInterest;
+
+      // Per-period contribution adjusted for annual growth rate
+      const contribPerPeriod = add * Math.pow(1 + inc, y - 1);
+      const currentYearContrib = contribPerPeriod * factor;
+
+      // Compound existing balance for one full year
+      const balanceAfterCompound = balance * Math.pow(1 + r / n, n);
+
+      // FV of ordinary annuity: derive per-contribution-period rate from annual compounding rate
+      // This gives the correct FV whether contributions are monthly, yearly, etc.
+      const rPerContrib = r > 0 && factor > 0 ? Math.pow(1 + r / n, n / factor) - 1 : 0;
+      const contribFV = rPerContrib > 1e-10
+        ? contribPerPeriod * (Math.pow(1 + rPerContrib, factor) - 1) / rPerContrib
+        : currentYearContrib;
+
+      const interest = (balanceAfterCompound - balance) + (contribFV - currentYearContrib);
+      balance = balanceAfterCompound + contribFV;
       totalContrib += currentYearContrib;
       totalInterest += Math.max(0, interest);
 
@@ -104,10 +115,10 @@ function calcCompound(plan: any) {
 function AssetPanel({ asset, onChange, onRemove, canRemove }: { asset: any; onChange: (v: any) => void; onRemove: () => void; canRemove: boolean; }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
-  const [localState, setLocalState] = useState({ principal: String(asset.principal), years: String(asset.years), additionalAmount: String(asset.additionalAmount) });
+  const [localState, setLocalState] = useState({ principal: String(asset.principal), years: String(asset.years), additionalAmount: String(asset.additionalAmount), annualIncreaseRate: String(asset.annualIncreaseRate ?? 0) });
 
   useEffect(() => {
-    setLocalState({ principal: String(asset.principal), years: String(asset.years), additionalAmount: String(asset.additionalAmount) });
+    setLocalState({ principal: String(asset.principal), years: String(asset.years), additionalAmount: String(asset.additionalAmount), annualIncreaseRate: String(asset.annualIncreaseRate ?? 0) });
   }, [asset.id]);
 
   const update = (k: string, v: any) => onChange({ ...asset, [k]: v });
@@ -115,6 +126,7 @@ function AssetPanel({ asset, onChange, onRemove, canRemove }: { asset: any; onCh
     let val = parseFloat(localState[k as keyof typeof localState]);
     if (isNaN(val)) val = 0;
     if (k === "years") val = Math.max(0, Math.min(100, val));
+    if (k === "annualIncreaseRate") val = Math.max(0, Math.min(50, val));
     update(k, val);
     setLocalState(p => ({ ...p, [k]: String(val) }));
   };
@@ -150,6 +162,24 @@ function AssetPanel({ asset, onChange, onRemove, canRemove }: { asset: any; onCh
             <div className="space-y-1.5"><Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">{t("app.simulator.dca")}</Label><Input value={localState.additionalAmount} onChange={e => setLocalState({...localState, additionalAmount: e.target.value})} onBlur={() => handleBlur("additionalAmount")} className="h-10 rounded-xl bg-muted/20 border-none shadow-inner font-black text-xs" /></div>
             <div className="space-y-1.5"><Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">Interval</Label><Select value={asset.additionalFreq || 'monthly'} onValueChange={v => update("additionalFreq", v)}><SelectTrigger className="h-10 rounded-xl bg-muted/20 border-none shadow-inner font-bold text-xs"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl">{CONTRIB_FREQS.map(f => (<SelectItem key={f.key} value={f.key}>{t(`app.types.frequency.${f.key}`)}</SelectItem>))}</SelectContent></Select></div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">DCA Growth /yr <span className="opacity-50">(Optional)</span></Label>
+              <div className="relative">
+                <Input value={localState.annualIncreaseRate} onChange={e => setLocalState({...localState, annualIncreaseRate: e.target.value})} onBlur={() => handleBlur("annualIncreaseRate")} placeholder="0" className="h-10 rounded-xl bg-muted/20 border-none shadow-inner font-black text-xs pr-6" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-40">%</span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-black uppercase tracking-widest opacity-60 ml-1">Compounding</Label>
+              <Select value={asset.compoundFreq || 'yearly'} onValueChange={v => update("compoundFreq", v)}>
+                <SelectTrigger className="h-10 rounded-xl bg-muted/20 border-none shadow-inner font-bold text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {COMPOUND_FREQS.map(f => (<SelectItem key={f.key} value={f.key}>{f.key.charAt(0).toUpperCase() + f.key.slice(1)}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       )}
     </Card>
@@ -163,7 +193,7 @@ const Simulator = () => {
   const { user } = useAuth(); const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
-  const [plans, setPlans] = useState<any[]>([{ id: "p1", name: "Strategic Growth", icon: "📈", principal: 100000, annualRate: 10, additionalAmount: 10000, additionalFreq: "monthly", years: 20, annualIncreaseRate: 5, compoundFreq: "yearly", color: "#6366f1" }]);
+  const [plans, setPlans] = useState<any[]>([{ id: "p1", name: "Strategic Growth", icon: "📈", principal: 100000, annualRate: 10, additionalAmount: 10000, additionalFreq: "monthly", years: 20, annualIncreaseRate: 0, compoundFreq: "yearly", color: "#6366f1" }]);
   const [savedSims, setSavedSims] = useState<PPSimulation[]>([]);
   const [simName, setSimName] = useState("Wealth Forecast");
 
