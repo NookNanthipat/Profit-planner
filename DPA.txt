@@ -1,0 +1,18 @@
+  ProfitPlanner — บันทึกผู้ประมวลผลข้อมูล (Data Processors)
+  วันที่บันทึก: 10 พฤษภาคม 2026
+
+  1. Supabase Inc.
+     วัตถุประสงค์: ฐานข้อมูล, Authentication
+     Server: Singapore (ap-southeast-1)
+     DPA: https://supabase.com/legal/dpa
+     สถานะ: ครอบคลุมใน Terms of Service
+
+  2. Netlify Inc.
+     วัตถุประสงค์: Hosting
+     DPA: https://www.netlify.com/legal/data-processing-agreement/
+     สถานะ: ครอบคลุมใน Terms of Service
+
+  3. Stripe Inc.
+     วัตถุประสงค์: ประมวลผลการชำระเงิน
+     DPA: https://stripe.com/legal/dpa
+     สถานะ: ครอบคลุมใน Terms of Service

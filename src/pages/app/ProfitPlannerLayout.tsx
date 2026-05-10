@@ -56,13 +56,16 @@ const ProfitPlannerLayout = () => {
       const access = !!data;
       setHasAccess(access);
 
-      // Check for Pro specifically
+      // Check for Pro — include both 'active' and unexpired 'trial'
       const { data: proRes } = await supabase.from("user_products")
-        .select("status")
+        .select("status, expired_at")
         .eq("user_id", user.id)
-        .eq("status", "active");
-      
-      setIsPro(access && (proRes?.length || 0) > 0);
+        .in("status", ["active", "trial"]);
+
+      const hasValidPro = (proRes ?? []).some(
+        r => !r.expired_at || new Date(r.expired_at) > new Date()
+      );
+      setIsPro(access && hasValidPro);
 
       if (access) await seedDefaultCategoriesIfEmpty(user.id);
       setChecking(false);

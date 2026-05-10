@@ -24,7 +24,7 @@ export const PaywallOverlay = ({ title }: { title: string }) => {
               Upgrade to Pro
             </Link>
           </Button>
-          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Starting from $4.99/mo</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">One-time purchase · Lifetime access</p>
         </div>
       </div>
     </div>

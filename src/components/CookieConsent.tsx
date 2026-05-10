@@ -47,9 +47,9 @@ const CookieConsent = () => {
                   {isTh ? "เราใช้คุกกี้" : "We use cookies"}
                 </h4>
                 <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                  {isTh 
-                    ? "เพื่อเพิ่มประสิทธิภาพการใช้งานและวิเคราะห์ข้อมูลเว็บไซต์ อ่านเพิ่มเติมได้ที่" 
-                    : "To enhance your experience and analyze our traffic. Learn more in our"}{" "}
+                  {isTh
+                    ? "เพื่อเก็บ session และการตั้งค่าภาษาของคุณเท่านั้น ไม่มีการ tracking บุคคลที่สาม อ่านเพิ่มเติมได้ที่"
+                    : "Only for session and language preferences — no third-party tracking. Learn more in our"}{" "}
                   <Link to="/privacy" className="text-primary hover:underline underline-offset-4">
                     {isTh ? "นโยบายความเป็นส่วนตัว" : "Privacy Policy"}
                   </Link>.

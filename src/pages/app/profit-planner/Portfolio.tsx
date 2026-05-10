@@ -120,7 +120,7 @@ async function fetchAssetMarketData(symbol: string, type: AssetType, addLog: (m:
 
     if (!result) {
        addLog("Step 4: Attempting Emergency Fallback (Finnhub)...");
-       const tokens = [import.meta.env.VITE_FINNHUB_TOKEN as string, "sandbox_c8v7lka23idfeqf1u9v0"].filter(Boolean);
+       const tokens = [import.meta.env.VITE_FINNHUB_TOKEN as string].filter(Boolean);
        for (const token of tokens) {
          try {
            const fRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanSym}&token=${token}`);

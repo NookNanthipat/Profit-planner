@@ -153,7 +153,7 @@ const PrivacyPolicy = () => {
                   <tr>
                     <td className="px-4 py-2">Supabase Inc.</td>
                     <td className="px-4 py-2">{isTh ? "ฐานข้อมูล, Authentication" : "Database, Authentication"}</td>
-                    <td className="px-4 py-2">USA / Singapore</td>
+                    <td className="px-4 py-2">Singapore (ap-southeast-1)</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2">Vercel Inc. / Netlify</td>
@@ -272,7 +272,7 @@ const PrivacyPolicy = () => {
           {/* Contact */}
           <div className="pt-10 border-t border-border space-y-2 text-sm text-muted-foreground">
             <p>
-              {isTh ? "ติดต่อ DPO:" : "Contact DPO:"}{" "}
+              {isTh ? "ติดต่อผู้ประสานงานด้านข้อมูลส่วนบุคคล:" : "Contact Personal Data Coordinator:"}{" "}
               <strong>nanthipat.nia@gmail.com</strong>
             </p>
             <p>
