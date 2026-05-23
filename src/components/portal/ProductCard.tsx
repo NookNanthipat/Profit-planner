@@ -34,20 +34,18 @@ const ProductCard = ({ product, entitlement }: Props) => {
   const displayDesc = isThai && product.description_th ? product.description_th : product.description;
 
   const isComingSoon = product.is_coming_soon;
-  const isActive = entitlement && (entitlement.status === "active" || entitlement.status === "trial") &&
+  const isFree = entitlement?.status === "free";
+  const isActive = !isFree && !!entitlement &&
+    (entitlement.status === "active" || entitlement.status === "trial") &&
     (!entitlement.expired_at || new Date(entitlement.expired_at) > new Date());
   const isTrial = isActive && entitlement?.status === "trial";
-  
-  // A user has a "Free Version" if they have an entitlement but the product's primary price is 0
-  const isFreeVersion = isActive && product.price_amount === 0;
+  const isAccessible = isActive || isFree; // can open the app
 
   const getBadgeText = () => {
     if (isComingSoon) return t("product.coming_soon") === "product.coming_soon" ? "Coming Soon" : t("product.coming_soon");
+    if (isFree) return isThai ? "แผนฟรี" : "Free Plan";
     if (isTrial) return t("product.trial") === "product.trial" ? "Trial" : t("product.trial");
-    if (isActive) {
-      if (isFreeVersion) return "Free Version";
-      return t("nav.active") === "nav.active" ? "Active" : t("nav.active");
-    }
+    if (isActive) return t("nav.active") === "nav.active" ? "Active" : t("nav.active");
     return product.badge || (t("nav.available") === "nav.available" ? "Available" : t("nav.available"));
   };
 
@@ -55,9 +53,12 @@ const ProductCard = ({ product, entitlement }: Props) => {
     <Card className="p-6 flex flex-col gap-5 hover:shadow-2xl transition-all duration-500 border-border/60 bg-card/60 backdrop-blur rounded-[32px] group">
       <div className="flex items-start justify-between gap-3">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-          {isComingSoon ? <Clock size={22} /> : isActive ? <Sparkles size={22} /> : <Lock size={22} />}
+          {isComingSoon ? <Clock size={22} /> : isAccessible ? <Sparkles size={22} /> : <Lock size={22} />}
         </div>
-        <Badge variant={isComingSoon ? "outline" : (isActive && !isTrial ? "default" : "secondary")} className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+        <Badge
+          variant={isComingSoon ? "outline" : (isActive && !isTrial ? "default" : "secondary")}
+          className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
+        >
           {getBadgeText()}
         </Badge>
       </div>
@@ -96,24 +97,26 @@ const ProductCard = ({ product, entitlement }: Props) => {
         </div>
         
         {isComingSoon ? (
-          <Button size="lg" variant="ghost" disabled className="rounded-2xl px-6 font-bold text-xs uppercase tracking-widest">{t("product.coming_soon") === "product.coming_soon" ? "Soon" : t("product.coming_soon")}</Button>
-        ) : isActive && product.app_route ? (
-          <EditableButton 
-             section="products"
-             fieldKey={`${product.id}_action`}
-             defaultLabel={t("product.open_app") === "product.open_app" ? "Open Application" : t("product.open_app")}
-             defaultHref={product.app_route || "#"}
-             className="btn-primary h-14 text-[11px] font-black uppercase tracking-widest rounded-[22px] px-8 flex items-center gap-2 shadow-xl shadow-primary/20 hover:scale-105 transition-all"
-             targetCols={{ label: isThai ? "name_th" : "name", href: "app_route" }}
+          <Button size="lg" variant="ghost" disabled className="rounded-2xl px-6 font-bold text-xs uppercase tracking-widest">
+            {t("product.coming_soon") === "product.coming_soon" ? "Soon" : t("product.coming_soon")}
+          </Button>
+        ) : isAccessible && product.app_route ? (
+          <EditableButton
+            section="products"
+            fieldKey={`${product.id}_action`}
+            defaultLabel={t("product.open_app") === "product.open_app" ? "Open Application" : t("product.open_app")}
+            defaultHref={product.app_route || "#"}
+            className="btn-primary h-14 text-[11px] font-black uppercase tracking-widest rounded-[22px] px-8 flex items-center gap-2 shadow-xl shadow-primary/20 hover:scale-105 transition-all"
+            targetCols={{ label: isThai ? "name_th" : "name", href: "app_route" }}
           />
         ) : (
-          <EditableButton 
-             section="products"
-             fieldKey={`${product.id}_action`}
-             defaultLabel={t("product.buy_now") === "product.buy_now" ? "Unlock Now" : t("product.buy_now")}
-             defaultHref={`/checkout/${product.slug}`}
-             className="btn-primary h-12 text-[10px] font-black uppercase tracking-widest rounded-2xl px-6 hover:scale-105 transition-all shadow-lg"
-             targetCols={{ label: isThai ? "name_th" : "name", href: "slug" }}
+          <EditableButton
+            section="products"
+            fieldKey={`${product.id}_action`}
+            defaultLabel={t("product.buy_now") === "product.buy_now" ? "Unlock Now" : t("product.buy_now")}
+            defaultHref={`/checkout/${product.slug}`}
+            className="btn-primary h-12 text-[10px] font-black uppercase tracking-widest rounded-2xl px-6 hover:scale-105 transition-all shadow-lg"
+            targetCols={{ label: isThai ? "name_th" : "name", href: "slug" }}
           />
         )}
       </div>

@@ -145,18 +145,25 @@ const PortalPage = () => {
     );
   }
 
-  const owned = products.filter((p) => {
-    if (!p?.id) return false;
-    const e = entitlements[p.id];
-    if (!e) return false;
-    if (e.expired_at && new Date(e.expired_at) < new Date()) return false;
-    return e.status === "active" || e.status === "trial";
-  });
+  // All non-coming-soon products appear in "Your Products".
+  // Products with a paid/trial entitlement get their real status;
+  // everything else shows as "free" (accessible but limited).
+  const owned = products.filter((p) => p?.id && !p.is_coming_soon);
 
-  const available = products.filter((p) => {
-    if (!p?.id) return false;
-    return !owned.some(o => o.id === p.id);
-  });
+  const getEntitlement = (p: Product): UserProduct | undefined => {
+    const e = entitlements[p.id];
+    if (e) {
+      // expired trial → treat as free again
+      if (e.expired_at && new Date(e.expired_at) < new Date()) {
+        return { ...e, status: "free" } as UserProduct;
+      }
+      return e;
+    }
+    // No row → synthetic free entitlement
+    return { id: "free", user_id: user!.id, product_id: p.id, status: "free", purchased_at: "", expired_at: null, created_at: "" } as unknown as UserProduct;
+  };
+
+  const available = products.filter((p) => p?.id && p.is_coming_soon);
   const logoutText = t("nav.sign_out") === "nav.sign_out" ? "Sign out" : t("nav.sign_out");
   const activeText = t("nav.active") === "nav.active" ? "active" : t("nav.active");
   const availableText = t("nav.available") === "nav.available" ? "available" : t("nav.available");
@@ -203,7 +210,7 @@ const PortalPage = () => {
             <h2 className="text-xl font-semibold">
               <EditableText section="portal" fieldKey="your_products" defaultValue={ds("your_products", "nav.your_products") || "Your Products"} />
             </h2>
-            <span className="text-sm text-muted-foreground">{owned.length} {activeText}</span>
+            <span className="text-sm text-muted-foreground">{owned.length} {owned.length === 1 ? "product" : "products"}</span>
           </div>
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -218,7 +225,7 @@ const PortalPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {owned.map((p) => (
-                <ProductCard key={p.id} product={p} entitlement={entitlements[p.id]} />
+                <ProductCard key={p.id} product={p} entitlement={getEntitlement(p)} />
               ))}
             </div>
           )}
