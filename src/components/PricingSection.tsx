@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./admin/EditableText";
 import { EditableButton } from "./admin/EditableButton";
 import { useProductAccess } from "@/hooks/useProductAccess";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminEdit } from "@/context/AdminEditContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface Plan {
   name: string;
@@ -24,6 +29,31 @@ const PricingSection = () => {
   const plans = Array.isArray(rawPlans) ? (rawPlans as Plan[]) : [];
   const { user } = useAuth();
   const { hasAccess, isPro } = useProductAccess("profit-planner");
+  const { isEditMode } = useAdminEdit();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isGranting, setIsGranting] = useState(false);
+
+  const handleFreePlanClick = async () => {
+    if (!user) { navigate("/login"); return; }
+    if (hasAccess) { navigate("/app/profit-planner/dashboard"); return; }
+    setIsGranting(true);
+    try {
+      const { data, error } = await supabase.rpc("grant_trial_access", { _product_slug: "profit-planner" });
+      if (error) throw error;
+      if (data?.error === "already_exists") {
+        toast({ title: "Upgrade Required", description: "Your trial has expired. Please upgrade to Pro." });
+        navigate("/portal");
+        return;
+      }
+      toast({ title: "Free Access Granted!", description: "Your 7-day trial has started." });
+      navigate("/app/profit-planner/dashboard");
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsGranting(false);
+    }
+  };
 
   const getPlanLabel = (plan: Plan, i: number) => {
     if (plan.popular && isPro) return i18n.language?.startsWith("th") ? "เข้าใช้งาน" : "Go to App";
@@ -102,17 +132,29 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <EditableButton
-                section="pricing"
-                fieldKey={`plan_${i}_cta`}
-                defaultLabel={getPlanLabel(plan, i)}
-                defaultHref={getPlanHref(plan, i)}
-                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center ${
-                  plan.popular
-                    ? "btn-primary shadow-lg shadow-primary/20"
-                    : "border-2 border-border text-foreground hover:border-primary hover:text-primary"
-                }`}
-              />
+              {/* Free plan (index 0) gets async onClick — admin edit mode falls back to EditableButton */}
+              {i === 0 && !isEditMode ? (
+                <button
+                  onClick={handleFreePlanClick}
+                  disabled={isGranting}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 border-2 border-border text-foreground hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  {isGranting && <Loader2 size={14} className="animate-spin" />}
+                  {getPlanLabel(plan, i)}
+                </button>
+              ) : (
+                <EditableButton
+                  section="pricing"
+                  fieldKey={`plan_${i}_cta`}
+                  defaultLabel={getPlanLabel(plan, i)}
+                  defaultHref={getPlanHref(plan, i)}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center ${
+                    plan.popular
+                      ? "btn-primary shadow-lg shadow-primary/20"
+                      : "border-2 border-border text-foreground hover:border-primary hover:text-primary"
+                  }`}
+                />
+              )}
             </motion.div>
           )) : (
             <div className="col-span-3 py-10 text-center text-muted-foreground italic">No pricing plans found.</div>
