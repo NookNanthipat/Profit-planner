@@ -27,66 +27,11 @@ const HeroSection = () => {
     { label: ds("investments", "hero.investments"), value: "$820", change: "+8%", positive: true },
   ];
 
-  const handleStartFree = async (e: React.MouseEvent) => {
-    // If not admin editing, handle free entitlement
-    if (overrides["_editMode"]) return; 
-    
-    if (!user) {
-      window.location.href = "/login";
-      return;
-    }
-
-    try {
-      // Find the main product (ProfitPlanner)
-      const { data: product } = await supabase.from("products").select("id").eq("slug", "profit-planner").single();
-      if (!product) throw new Error("Product not found");
-
-      // Use RPC for the most accurate entitlement check (matches the dashboard logic)
-      const { data: hasAccess } = await supabase.rpc("user_has_product_access", {
-        _user_id: user.id,
-        _product_slug: "profit-planner",
-      });
-
-      if (hasAccess) {
-        toast({ title: t("nav.welcome"), description: "You already have active access. Redirecting..." });
-        window.location.href = "/app/profit-planner/dashboard";
-        return;
-      }
-
-      // Check if they have an EXPIRED trial (already exists in DB but expired)
-      const { data: existing } = await supabase.from("user_products")
-        .select("status, expired_at")
-        .eq("user_id", user.id)
-        .eq("product_id", product.id)
-        .maybeSingle();
-
-      if (existing) {
-        toast({ title: "Upgrade Required", description: "Your trial has expired. Please upgrade to Pro." });
-        window.location.href = "/portal";
-        return;
-      }
-
-      // ONLY grant trial access if user has NO record for this product
-      // Uses server-side RPC (SECURITY DEFINER) — client cannot manipulate status
-      const { data: rpcResult, error } = await supabase.rpc("grant_trial_access", {
-        _product_slug: "profit-planner",
-      });
-
-      if (error) throw error;
-      if (rpcResult?.error) {
-        if (rpcResult.error === "already_exists") {
-          toast({ title: "Upgrade Required", description: "Your trial has expired. Please upgrade to Pro." });
-          window.location.href = "/portal";
-          return;
-        }
-        throw new Error(rpcResult.error);
-      }
-
-      toast({ title: "Free Access Granted", description: "You can now use the dashboard and transactions!" });
-      window.location.href = "/portal";
-    } catch (err: any) {
-      toast({ title: "Registration failed", description: err.message, variant: "destructive" });
-    }
+  const handleStartFree = (e: React.MouseEvent) => {
+    if (overrides["_editMode"]) return;
+    // All logged-in users can enter the app for free.
+    // Premium features are gated inside the app via PaywallOverlay.
+    window.location.href = user ? "/app/profit-planner/dashboard" : "/login";
   };
 
   return (

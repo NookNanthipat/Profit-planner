@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
 import { ArrowLeft, LayoutDashboard, ListPlus, Loader2, Lock, Settings, RefreshCw, PieChart, BarChart2, Briefcase, Target, Menu } from "lucide-react";
+// Lock kept for nav item icons
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { seedDefaultCategoriesIfEmpty } from "@/lib/profitPlanner";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/profitplanner-logo.png";
@@ -48,15 +48,8 @@ const ProfitPlannerLayout = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Basic entry check
-      const { data } = await supabase.rpc("user_has_product_access", {
-        _user_id: user.id,
-        _product_slug: "profit-planner",
-      });
-      const access = !!data;
-      setHasAccess(access);
-
-      // Check for Pro — include both 'active' and unexpired 'trial'
+      // All authenticated users can enter the app.
+      // isPro = has an active or unexpired trial row in user_products.
       const { data: proRes } = await supabase.from("user_products")
         .select("status, expired_at")
         .eq("user_id", user.id)
@@ -65,9 +58,10 @@ const ProfitPlannerLayout = () => {
       const hasValidPro = (proRes ?? []).some(
         r => !r.expired_at || new Date(r.expired_at) > new Date()
       );
-      setIsPro(access && hasValidPro);
+      setHasAccess(true);
+      setIsPro(hasValidPro);
 
-      if (access) await seedDefaultCategoriesIfEmpty(user.id);
+      await seedDefaultCategoriesIfEmpty(user.id);
       setChecking(false);
     })();
   }, [user]);
@@ -80,26 +74,6 @@ const ProfitPlannerLayout = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <Card className="max-w-md w-full p-8 text-center border-none shadow-2xl rounded-[40px]">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-6">
-            <Lock size={28} />
-          </div>
-          <h1 className="text-2xl font-black uppercase tracking-tight mb-2 text-foreground">Access Restricted</h1>
-          <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
-            You don't own ProfitPlanner yet. Unlock full access by purchasing or starting a free trial.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Button className="h-12 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" asChild><Link to="/checkout/profit-planner">Unlock Now</Link></Button>
-            <Button variant="ghost" className="rounded-xl font-bold uppercase text-xs" asChild><Link to="/portal">Back to portal</Link></Button>
-          </div>
-        </Card>
       </div>
     );
   }
