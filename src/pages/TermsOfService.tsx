@@ -271,8 +271,6 @@ const TermsOfService = () => {
           <div className="pt-10 border-t border-border space-y-2 text-sm text-muted-foreground">
             <p>
               {isTh ? "ติดต่อ:" : "Contact:"}{" "}
-              <strong>support@profitplanner.app</strong>
-              {" · "}
               <strong>nanthipat.nia@gmail.com</strong>
             </p>
             <p>

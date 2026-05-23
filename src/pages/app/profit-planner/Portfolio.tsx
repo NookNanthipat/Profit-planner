@@ -136,9 +136,10 @@ async function fetchAssetMarketData(symbol: string, type: AssetType, addLog: (m:
 
     if (result) {
        addLog(`Memorizing data for ${cleanSym}...`);
-       await supabase.from("pp_market_cache").upsert({
+       const { error: cacheErr } = await supabase.from("pp_market_cache").upsert({
          symbol: cleanSym, price: result.price, name: result.fullName, logo_url: result.logo, source: result.source, updated_at: new Date().toISOString()
        });
+       if (cacheErr) addLog(`[WARN] Cache write failed: ${cacheErr.message}`);
        return { ...result, time: new Date().toISOString() };
     }
 

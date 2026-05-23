@@ -11,7 +11,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.binance.com https://open.er-api.com https://api.dicebear.com https://finnhub.io; frame-ancestors 'none';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.binance.com https://open.er-api.com https://api.dicebear.com https://finnhub.io https://api.stripe.com https://m.stripe.network https://api.allorigins.win https://corsproxy.io https://query1.finance.yahoo.com https://query2.finance.yahoo.com; frame-src https://js.stripe.com https://hooks.stripe.com; frame-ancestors 'none';"
 
 [[redirects]]
   from = "/*"

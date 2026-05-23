@@ -83,7 +83,7 @@ const RefundPolicy = () => {
           <Section title={isTh ? "3. วิธีขอคืนเงิน" : "3. How to Request a Refund"}>
             {isTh ? (
               <>
-                <p>ส่งอีเมลไปที่ <strong>support@profitplanner.app</strong> พร้อมข้อมูลดังนี้:</p>
+                <p>ส่งอีเมลไปที่ <strong>nanthipat.nia@gmail.com</strong> พร้อมข้อมูลดังนี้:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>อีเมลที่ใช้ลงทะเบียน</li>
                   <li>วันที่ชำระเงิน</li>
@@ -93,7 +93,7 @@ const RefundPolicy = () => {
               </>
             ) : (
               <>
-                <p>Email <strong>support@profitplanner.app</strong> with the following:</p>
+                <p>Email <strong>nanthipat.nia@gmail.com</strong> with the following:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Your registered email address</li>
                   <li>Date of payment</li>
@@ -110,7 +110,7 @@ const RefundPolicy = () => {
                 <div>
                   <p className="font-semibold text-foreground mb-1">ยกเลิกการสมัครสมาชิก (Subscription)</p>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>ยกเลิกได้ตลอดเวลาโดยติดต่อ <strong>support@profitplanner.app</strong></li>
+                    <li>ยกเลิกได้ตลอดเวลาโดยติดต่อ <strong>nanthipat.nia@gmail.com</strong></li>
                     <li>หลังยกเลิก คุณยังคงใช้งานได้จนถึงวันสิ้นสุดรอบบิลปัจจุบัน</li>
                     <li>จะไม่มีการเรียกเก็บเงินในรอบถัดไป</li>
                     <li>ข้อมูลและบัญชีของคุณ<strong>ยังคงอยู่</strong> — สามารถสมัครใหม่ได้ทุกเมื่อ</li>
@@ -130,7 +130,7 @@ const RefundPolicy = () => {
                 <div>
                   <p className="font-semibold text-foreground mb-1">Cancel Subscription</p>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Cancel at any time by contacting <strong>support@profitplanner.app</strong></li>
+                    <li>Cancel at any time by contacting <strong>nanthipat.nia@gmail.com</strong></li>
                     <li>After cancellation, you retain full access until the end of the current billing period</li>
                     <li>No further charges will be made</li>
                     <li>Your account and data <strong>remain intact</strong> — you can resubscribe at any time</li>
@@ -151,7 +151,7 @@ const RefundPolicy = () => {
           <div className="pt-10 border-t border-border space-y-2 text-sm text-muted-foreground">
             <p>
               {isTh ? "ติดต่อ:" : "Contact:"}{" "}
-              <strong>support@profitplanner.app</strong>
+              <strong>nanthipat.nia@gmail.com</strong>
             </p>
             <p>
               {isTh ? "ดูเพิ่มเติม:" : "See also:"}{" "}
