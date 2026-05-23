@@ -67,15 +67,21 @@ const HeroSection = () => {
       }
 
       // ONLY grant trial access if user has NO record for this product
-      const { error } = await supabase.from("user_products").insert({
-        user_id: user.id,
-        product_id: product.id,
-        status: "trial",
-        purchased_at: new Date().toISOString(),
-        expired_at: new Date(Date.now() + 7 * 86400000).toISOString() // 7 days
+      // Uses server-side RPC (SECURITY DEFINER) — client cannot manipulate status
+      const { data: rpcResult, error } = await supabase.rpc("grant_trial_access", {
+        _product_slug: "profit-planner",
       });
 
       if (error) throw error;
+      if (rpcResult?.error) {
+        if (rpcResult.error === "already_exists") {
+          toast({ title: "Upgrade Required", description: "Your trial has expired. Please upgrade to Pro." });
+          window.location.href = "/portal";
+          return;
+        }
+        throw new Error(rpcResult.error);
+      }
+
       toast({ title: "Free Access Granted", description: "You can now use the dashboard and transactions!" });
       window.location.href = "/portal";
     } catch (err: any) {
