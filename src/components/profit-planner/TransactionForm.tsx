@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { formatMoney, type PPAccount, type PPCategory, type PPTransaction, type TxType, type PPPerson } from "@/lib/profitPlanner";
 
 const schema = z.object({
-  type: z.enum(["income", "expense"]),
+  type: z.enum(["income", "expense", "saving", "investment"]),
   amount: z.number().positive().max(9_999_999_999),
   account_id: z.string().uuid(),
   category_id: z.string().uuid().nullable(),
@@ -267,6 +267,8 @@ const TransactionForm = ({ open, onOpenChange, tx, accounts, categories, onSaved
             <div className="grid grid-cols-2 gap-2 bg-muted/30 p-1 rounded-2xl">
               <Button type="button" variant={type === "expense" ? "default" : "ghost"} onClick={() => { setType("expense"); setParentCatId(""); setSubCatId(""); }} className={cn("rounded-xl h-9 font-black uppercase text-[10px]", type === "expense" && "shadow-md")}>{t("app.common.expense")}</Button>
               <Button type="button" variant={type === "income" ? "default" : "ghost"} onClick={() => { setType("income"); setParentCatId(""); setSubCatId(""); }} className={cn("rounded-xl h-9 font-black uppercase text-[10px]", type === "income" && "shadow-md")}>{t("app.common.income")}</Button>
+              <Button type="button" variant={type === "saving" ? "default" : "ghost"} onClick={() => { setType("saving"); setParentCatId(""); setSubCatId(""); }} className={cn("rounded-xl h-9 font-black uppercase text-[10px]", type === "saving" && "shadow-md")}>{t("app.common.saving")}</Button>
+              <Button type="button" variant={type === "investment" ? "default" : "ghost"} onClick={() => { setType("investment"); setParentCatId(""); setSubCatId(""); }} className={cn("rounded-xl h-9 font-black uppercase text-[10px]", type === "investment" && "shadow-md")}>{t("app.common.investment")}</Button>
             </div>
             
             <div className="grid grid-cols-2 gap-4">

@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 
 // ─── Base Types (Phase A) ─────────────────────────────────────────────────────
 export type AccountType = "cash" | "bank" | "credit" | "ewallet";
-export type TxType = "income" | "expense";
+export type TxType = "income" | "expense" | "saving" | "investment";
 
 export interface PPAccount {
   id: string;
@@ -162,6 +162,10 @@ export const DEFAULT_CATEGORIES: Array<
   { name: "Entertainment",  type: "expense", icon: "🎬", color: "#d946ef", sort_order: 6 },
   { name: "Health",         type: "expense", icon: "🏥", color: "#ef4444", sort_order: 7 },
   { name: "Other Expense",  type: "expense", icon: "📦", color: "#64748b", sort_order: 8 },
+  { name: "Emergency Fund", type: "saving",  icon: "🛡️", color: "#3b82f6", sort_order: 1 },
+  { name: "Provident Fund", type: "saving",  icon: "🏦", color: "#2563eb", sort_order: 2 },
+  { name: "Stock",          type: "investment", icon: "📈", color: "#f59e0b", sort_order: 1 },
+  { name: "Mutual Fund",    type: "investment", icon: "📊", color: "#d97706", sort_order: 2 },
 ];
 
 export async function seedDefaultCategoriesIfEmpty(userId: string) {

@@ -146,7 +146,12 @@ const Dashboard = () => {
               {recent.map((t) => (
                 <div key={t.id} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t.occurred_on}</span>
-                  <span className={`font-mono ${t.type === "income" ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
+                  <span className={`font-mono ${
+                    t.type === "income" ? "text-emerald-600 dark:text-emerald-400" : 
+                    t.type === "expense" ? "text-rose-600 dark:text-rose-400" :
+                    t.type === "saving" ? "text-blue-600 dark:text-blue-400" :
+                    "text-amber-600 dark:text-amber-400"
+                  }`}>
                     {t.type === "income" ? "+" : "-"}{formatMoney(Number(t.amount))}
                   </span>
                 </div>

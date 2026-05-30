@@ -235,6 +235,8 @@ const Transactions = () => {
               <SelectItem value="all">{t("app.common.all")}</SelectItem>
               <SelectItem value="income" className="text-emerald-600 font-black">{t("app.common.income")}</SelectItem>
               <SelectItem value="expense" className="text-rose-600 font-black">{t("app.common.expense")}</SelectItem>
+              <SelectItem value="saving" className="text-blue-600 font-black">{t("app.common.saving")}</SelectItem>
+              <SelectItem value="investment" className="text-amber-600 font-black">{t("app.common.investment")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -277,7 +279,11 @@ const Transactions = () => {
                     <p className="text-[9px] text-muted-foreground font-bold uppercase mt-1 tracking-tighter opacity-60">{t_item.occurred_on}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`text-base font-black tracking-tighter ${t_item.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
+                    <p className={`text-base font-black tracking-tighter ${
+                      t_item.type === "income" ? "text-emerald-600" : 
+                      t_item.type === "expense" ? "text-rose-600" :
+                      t_item.type === "saving" ? "text-blue-600" : "text-amber-600"
+                    }`}>
                       {t_item.type === "income" ? "+" : "-"}{formatMoney(Number(t_item.amount), acc?.currency ?? "THB")}
                     </p>
                     <div className="flex justify-end gap-1.5 mt-2">
@@ -295,12 +301,12 @@ const Transactions = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/10 border-b border-border/40 hover:bg-muted/10">
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.date")}</TableHead>
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.category")}</TableHead>
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.forms.subCategory")}</TableHead>
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.account")}</TableHead>
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.note")}</TableHead>
-                  <TableHead className="py-5 px-8 font-black uppercase text-[10px] tracking-widest text-muted-foreground text-right">{t("app.common.amount")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.date")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.category")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.forms.subCategory")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.account")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground">{t("app.common.note")}</TableHead>
+                  <TableHead className="py-5 px-4 font-black uppercase text-[10px] tracking-widest text-muted-foreground text-right">{t("app.common.amount")}</TableHead>
                   <TableHead className="w-32"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -313,13 +319,13 @@ const Transactions = () => {
 
                   return (
                     <TableRow key={t_item.id} className="hover:bg-muted/10 transition-all border-b border-border/20 group">
-                      <TableCell className="py-5 px-8 text-[10px] font-black uppercase tracking-widest opacity-60 font-mono">
+                      <TableCell className="py-5 px-4 text-[10px] font-black uppercase tracking-widest opacity-60 font-mono">
                         <div className="flex items-center gap-2">
                           {t_item.occurred_on}
                           {splitIds.has(t_item.id) && <Users size={12} className="text-primary shrink-0" />}
                         </div>
                       </TableCell>
-                      <TableCell className="py-5 px-8">
+                      <TableCell className="py-5 px-4">
                         <span className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-tight">
                           <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/20 text-lg shadow-inner shrink-0">
                             {cat?.parent_id ? catMap[cat.parent_id]?.icon : cat?.icon ?? "•"}
@@ -327,19 +333,23 @@ const Transactions = () => {
                           {parentName ?? t("app.common.uncategorized")}
                         </span>
                       </TableCell>
-                      <TableCell className="py-5 px-8 text-[10px] font-black uppercase tracking-widest opacity-70">
+                      <TableCell className="py-5 px-4 text-[10px] font-black uppercase tracking-widest opacity-70">
                         {subName}
                       </TableCell>
-                      <TableCell className="py-5 px-8 text-[10px] font-black uppercase tracking-tighter opacity-70">{acc?.name}</TableCell>
-                      <TableCell className="py-5 px-8 text-xs font-bold text-muted-foreground max-w-[200px] truncate italic">
+                      <TableCell className="py-5 px-4 text-[10px] font-black uppercase tracking-tighter opacity-70">{acc?.name}</TableCell>
+                      <TableCell className="py-5 px-4 text-xs font-bold text-muted-foreground max-w-[200px] truncate italic">
                         {t_item.note ? `"${t_item.note}"` : "—"}
                       </TableCell>
-                      <TableCell className="py-5 px-8 text-right">
-                        <span className={`font-mono text-sm font-black tracking-tighter ${t_item.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
+                      <TableCell className="py-5 px-4 text-right">
+                        <span className={`font-mono text-sm font-black tracking-tighter ${
+                          t_item.type === "income" ? "text-emerald-600" : 
+                          t_item.type === "expense" ? "text-rose-600" :
+                          t_item.type === "saving" ? "text-blue-600" : "text-amber-600"
+                        }`}>
                           {t_item.type === "income" ? "+" : "-"}{formatMoney(Number(t_item.amount), acc?.currency ?? "THB")}
                         </span>
                       </TableCell>
-                      <TableCell className="py-5 px-8">
+                      <TableCell className="py-5 px-4">
                         <div className="flex gap-1 justify-end">
                           <Button size="icon" variant="ghost" className="h-10 w-10 rounded-2xl hover:bg-primary/10 transition-colors shadow-sm border border-border/10" onClick={() => { setEditTx(t_item); setOpen(true); }}><Pencil size={18} /></Button>
                           <Button size="icon" variant="ghost" className="h-10 w-10 rounded-2xl hover:bg-rose-500/10 text-rose-500 transition-colors shadow-sm border border-border/10" onClick={() => remove(t_item)}><Trash2 size={18} /></Button>

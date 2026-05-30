@@ -156,7 +156,7 @@ function QuickAdd({ categories, budgetedIds, month, onSaved }: QuickAddProps) {
   const [saving, setSaving] = useState(false);
 
   const unbudgeted = categories.filter(
-    (c) => c.type === "expense" && !budgetedIds.has(c.id)
+    (c) => ["expense", "saving", "investment"].includes(c.type) && !budgetedIds.has(c.id)
   );
 
   if (!unbudgeted.length) return null;
@@ -424,6 +424,7 @@ const Budget = () => {
   const budgetedIds = useMemo(() => new Set(rows.filter((r) => r.planned_amount > 0).map((r) => r.category_id)), [rows]);
   const expenseRows = rows.filter((r) => r.category_type === "expense");
   const incomeRows  = rows.filter((r) => r.category_type === "income");
+  const savingRows  = rows.filter((r) => r.category_type === "saving" || r.category_type === "investment");
 
   return (
     <div className="space-y-8 pb-20">
@@ -490,6 +491,20 @@ const Budget = () => {
                   </h3>
                   <div className="divide-y divide-border/20">
                     {incomeRows.map((r, i) => (
+                      <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} onDelete={() => handleDeleteBudget(r)} />
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {savingRows.length > 0 && (
+                <Card className="p-4 lg:p-6 border-none shadow-sm ring-1 ring-border/40 rounded-[24px] lg:rounded-[32px]">
+                  <h3 className="text-[10px] lg:text-sm font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Wallet size={14} /> {t("app.common.saving")} & {t("app.common.investment")}
+                    <Badge variant="secondary" className="ml-auto bg-primary/5 text-primary border-none text-[10px]">{savingRows.length}</Badge>
+                  </h3>
+                  <div className="divide-y divide-border/20">
+                    {savingRows.map((r, i) => (
                       <BudgetRow key={r.category_id ?? i} row={r} onEdit={() => { setEditRow(r); setEditOpen(true); }} onDelete={() => handleDeleteBudget(r)} />
                     ))}
                   </div>

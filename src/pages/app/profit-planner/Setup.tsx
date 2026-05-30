@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { formatMoney, type PPAccount, type PPCategory, type PPPerson } from "@/lib/profitPlanner";
+import { formatMoney, type PPAccount, type PPCategory, type PPPerson, type TxType } from "@/lib/profitPlanner";
 
 // ─── Person Form ─────────────────────────────────────────────────────────────
 interface PersonFormProps {
@@ -146,7 +146,7 @@ function CategoryFormDialog({ open, onOpenChange, category, presetParentId, pare
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [f, setF]     = useState({ ...BLANK_CAT });
+  const [f, setF]     = useState({ ...BLANK_CAT, type: "expense" as TxType });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
 
@@ -206,17 +206,21 @@ function CategoryFormDialog({ open, onOpenChange, category, presetParentId, pare
           <DialogTitle className="font-black uppercase tracking-tight">{category ? t("app.common.edit") : t("app.setup.newCategory")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <div className="flex gap-2">
-            {(["income", "expense"] as const).map(tType => (
+          <div className="grid grid-cols-2 gap-2">
+            {(["expense", "income", "saving", "investment"] as const).map(tType => (
               <button type="button" key={tType} onClick={() => { set("type", tType); set("parent_id", ""); }}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                   f.type === tType
-                    ? tType === "income"
-                      ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 shadow-sm"
-                      : "bg-rose-500/10 border-rose-500 text-rose-600 shadow-sm"
+                    ? tType === "income" ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 shadow-sm"
+                    : tType === "expense" ? "bg-rose-500/10 border-rose-500 text-rose-600 shadow-sm"
+                    : tType === "saving" ? "bg-blue-500/10 border-blue-500 text-blue-600 shadow-sm"
+                    : "bg-amber-500/10 border-amber-500 text-amber-600 shadow-sm"
                     : "border-border text-muted-foreground hover:bg-muted/50"
                 }`}>
-                {tType === "income" ? `📥 ${t("app.common.income")}` : `📤 ${t("app.common.expense")}`}
+                {tType === "income" ? "📥 " + t("app.common.income") : 
+                 tType === "expense" ? "📤 " + t("app.common.expense") :
+                 tType === "saving" ? "🛡️ " + t("app.common.saving") :
+                 "📈 " + t("app.common.investment")}
               </button>
             ))}
           </div>
@@ -351,7 +355,7 @@ function AccountFormDialog({ open, onOpenChange, account, onSaved }: AccFormProp
 // ─── Category Tree display ────────────────────────────────────────────────────
 function CategoryTree({ categories, type, onEdit, onDelete, onAddSub }: {
   categories: PPCategory[];
-  type: "income" | "expense";
+  type: TxType;
   onEdit: (c: PPCategory) => void;
   onDelete: (id: string) => void;
   onAddSub: (parent: PPCategory) => void;
@@ -563,12 +567,17 @@ const Setup = () => {
         <TabsContent value="categories" className="space-y-6 mt-6">
           <div className="flex justify-end"><Button size="sm" onClick={() => handleOpenCatForm(null)} className="rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20"><Plus size={16} className="mr-1.5" /> {t("app.setup.newCategory")}</Button></div>
           <div className="space-y-8">
-            {(["expense", "income"] as const).map(tType => {
+            {(["expense", "income", "saving", "investment"] as const).map(tType => {
               const hasCats = categories.some(c => c.type === tType);
               if (!hasCats) return null;
               return (
                 <div key={tType}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4 pl-1 opacity-60">{tType === "expense" ? t("app.setup.outflows") : t("app.setup.inflows")}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4 pl-1 opacity-60">
+                    {tType === "expense" ? t("app.setup.outflows") : 
+                     tType === "income" ? t("app.setup.inflows") :
+                     tType === "saving" ? t("app.common.saving") :
+                     t("app.common.investment")}
+                  </p>
                   <CategoryTree categories={categories} type={tType} onEdit={handleOpenCatForm} onDelete={removeCategory} onAddSub={handleAddSub} />
                 </div>
               );

@@ -219,6 +219,8 @@
       "total": "Total",
       "income": "Income",
       "expense": "Expense",
+      "saving": "Saving",
+      "investment": "Investment",
       "status": "Status",
       "type": "Type",
       "currency": "Currency",

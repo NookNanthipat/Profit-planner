@@ -141,7 +141,16 @@ const AnnualDashboard = () => {
         const end   = `${y}-12-31`;
         const { data: txs, error } = await supabase
           .from("pp_transactions")
-          .select("type, amount, occurred_on, category_id")
+          .select(`
+            type, amount, occurred_on, category_id,
+            pp_splits (
+              id,
+              pp_split_participants (
+                actual_amount,
+                person_id
+              )
+            )
+          `)
           .eq("user_id", user.id)
           .gte("occurred_on", start)
           .lte("occurred_on", end);
@@ -167,16 +176,23 @@ const AnnualDashboard = () => {
           if (parts.length < 2) return;
           const m = parseInt(parts[1]) - 1;
           if (m >= 0 && m < 12) {
-            const amt = Number(t.amount) || 0;
-            if (t.type === "income") rows[m].income += amt;
-            else rows[m].expense += amt;
+            const split = t.pp_splits?.[0];
+            const selfParticipant = split?.pp_split_participants?.find((p: any) => p.person_id === null);
+            const amt = selfParticipant ? Number(selfParticipant.actual_amount) : (Number(t.amount) || 0);
+
+            if (t.type === "income") {
+              rows[m].income += amt;
+            } else if (t.type === "expense") {
+              rows[m].expense += amt;
+            } else if (t.type === "saving" || t.type === "investment") {
+              rows[m].saving += amt;
+            }
           }
         });
 
         return rows.map(r => ({
           ...r,
-          net: r.income - r.expense,
-          saving: Math.max(0, r.income - r.expense)
+          net: r.income - r.expense - r.saving,
         }));
       };
 
@@ -187,9 +203,12 @@ const AnnualDashboard = () => {
       setPrevMonthly(prevMonthlyArr);
 
       const catMap: Record<string, number> = {};
-      thisYearTxs.filter(t => t.type === "expense").forEach(t => {
+      thisYearTxs.filter(t => ["expense", "saving", "investment"].includes(t.type)).forEach(t => {
         const k = t.category_id ?? "uncategorized";
-        catMap[k] = (catMap[k] ?? 0) + (Number(t.amount) || 0);
+        const split = t.pp_splits?.[0];
+        const selfParticipant = split?.pp_split_participants?.find((p: any) => p.person_id === null);
+        const amt = selfParticipant ? Number(selfParticipant.actual_amount) : (Number(t.amount) || 0);
+        catMap[k] = (catMap[k] ?? 0) + amt;
       });
 
       const catArr: CategoryTotal[] = Object.entries(catMap)

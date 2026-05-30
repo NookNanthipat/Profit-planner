@@ -209,6 +209,8 @@
       "total": "ทั้งหมด",
       "income": "รายรับ",
       "expense": "รายจ่าย",
+      "saving": "เงินออม",
+      "investment": "การลงทุน",
       "status": "สถานะ",
       "type": "ประเภท",
       "currency": "สกุลเงิน",
